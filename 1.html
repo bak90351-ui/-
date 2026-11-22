@@ -1,28 +1,3062 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maw Coon</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#120c0a" />
+<title>ရာဇဝင်မဲ့သူ — THE NAMELESS SOVEREIGN</title>
+<style>
+  :root {
+    --bg-deep: #0d0807;
+    --bg-panel: rgba(20, 13, 11, 0.92);
+    --bg-card: rgba(34, 22, 18, 0.88);
+    --gold: #e5b55a;
+    --gold-bright: #ffd985;
+    --crimson: #c83e37;
+    --jade: #3ca387;
+    --text: #f5ead6;
+    --text-dim: #b9a78e;
+    --border: rgba(229, 181, 90, 0.35);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans Myanmar", system-ui, -apple-system, sans-serif;
+    touch-action: none;
+  }
+
+  #app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #0d0807;
+  }
+
+  canvas#gameCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+  }
+
+  #rotateBanner {
+    display: none;
+    position: fixed;
+    top: calc(10px + var(--safe-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    background: rgba(18, 11, 9, 0.9);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+
+  .letterbox {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: #050303;
+    z-index: 25;
+    transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  #letterboxTop { top: 0; }
+  #letterboxBottom { bottom: 0; }
+  body.cinematic .letterbox { height: 9vh; }
+
+  #fadeCurtain {
+    position: fixed;
+    inset: 0;
+    background: #060403;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 70;
+    transition: opacity 0.42s ease;
+  }
+  #fadeCurtain.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: calc(18px + var(--safe-top)) calc(24px + var(--safe-right)) calc(18px + var(--safe-bottom)) calc(24px + var(--safe-left));
+  }
+  .screen.visible {
+    display: flex;
+  }
+
+  #mainMenu {
+    background: linear-gradient(90deg, rgba(10, 6, 5, 0.92) 0%, rgba(10, 6, 5, 0.68) 48%, rgba(10, 6, 5, 0.12) 100%);
+    justify-content: space-between;
+  }
+
+  .menu-header { max-width: 680px; }
+
+  .title-mm {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 800;
+    color: var(--gold-bright);
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.9), 0 0 28px rgba(229, 181, 90, 0.25);
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .title-en {
+    font-size: clamp(14px, 2.2vw, 22px);
+    letter-spacing: 0.24em;
+    color: var(--text);
+    margin: 4px 0 6px;
+    font-weight: 700;
+  }
+
+  .tagline {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: clamp(12px, 1.7vw, 15px);
+    margin: 0;
+  }
+
+  .menu-body {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex: 1;
+    padding-top: 14px;
+    min-height: 0;
+  }
+
+  .menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(320px, 48vw);
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .btn-rpg {
+    appearance: none;
+    background: linear-gradient(90deg, rgba(38, 22, 17, 0.92), rgba(22, 13, 10, 0.84));
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold);
+    color: var(--text);
+    padding: 11px 16px;
+    font-size: clamp(13px, 1.8vw, 16px);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.14s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    min-height: 44px;
+  }
+
+  .btn-rpg:hover:not(:disabled), .btn-rpg:focus-visible {
+    background: linear-gradient(90deg, rgba(84, 44, 24, 0.96), rgba(38, 20, 14, 0.9));
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+    transform: translateX(5px);
+    box-shadow: 0 0 18px rgba(229, 181, 90, 0.22);
+    outline: none;
+  }
+
+  .btn-rpg:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-rpg.danger { border-left-color: var(--crimson); }
+  .btn-rpg.small { padding: 7px 12px; min-height: 36px; font-size: 13px; }
+
+  .menu-status-card {
+    background: rgba(16, 10, 8, 0.78);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    max-width: 340px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    backdrop-filter: blur(6px);
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(7, 4, 3, 0.84);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) calc(14px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .panel {
+    width: min(1020px, 100%);
+    height: min(640px, 92vh);
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(12, 7, 6, 0.92);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .panel-title {
+    font-size: clamp(15px, 2vw, 19px);
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0;
+  }
+
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; overflow-x: auto; }
+
+  .tab-btn {
+    background: rgba(35, 22, 18, 0.8);
+    border: 1px solid rgba(229, 181, 90, 0.25);
+    color: var(--text-dim);
+    padding: 6px 11px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: rgba(229, 181, 90, 0.2);
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid rgba(229, 181, 90, 0.22);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+
+  .card h4 {
+    margin: 0 0 8px;
+    color: var(--gold);
+    font-size: 14px;
+    border-bottom: 1px solid rgba(229, 181, 90, 0.15);
+    padding-bottom: 4px;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 11px;
+    border-radius: 3px;
+    background: rgba(229, 181, 90, 0.16);
+    color: var(--gold-bright);
+    border: 1px solid rgba(229, 181, 90, 0.3);
+  }
+
+  #hud {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+  }
+  body.playing #hud { display: block; }
+
+  .hud-top-left {
+    position: fixed;
+    top: calc(10px + var(--safe-top));
+    left: calc(12px + var(--safe-left));
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: min(275px, 44vw);
+  }
+
+  .bar-wrap {
+    background: rgba(10, 6, 5, 0.78);
+    border: 1px solid rgba(229, 181, 90, 0.3);
+    border-radius: 3px;
+    height: 11px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-wrap.hp { height: 14px; }
+  .bar-fill { height: 100%; width: 100%; transition: width 0.12s linear; }
+  .fill-hp { background: linear-gradient(90deg, #8f1d18, #e04338); }
+  .fill-stm { background: linear-gradient(90deg, #217a46, #4cd17b); }
+  .fill-chi { background: linear-gradient(90deg, #1d5d8f, #48b5ff); }
+  .fill-pos { background: linear-gradient(90deg, #b87a14, #ffd15c); }
+
+  .bar-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+  }
+
+  .hud-top-right {
+    position: fixed;
+    top: calc(10px + var(--safe-top));
+    right: calc(12px + var(--safe-right));
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 52vw;
+  }
+
+  .hud-chip {
+    background: rgba(14, 9, 7, 0.82);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hud-chip:hover { border-color: var(--gold-bright); color: var(--gold-bright); }
+
+  #bossHud {
+    position: fixed;
+    top: calc(52px + var(--safe-top));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(460px, 72vw);
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(12, 6, 6, 0.84);
+    border: 1px solid rgba(200, 62, 55, 0.55);
+    padding: 7px 10px;
+    border-radius: 5px;
+  }
+  #bossHud.active { display: flex; }
+  .boss-title-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffb8a8;
+  }
+
+  #subtitleBox {
+    position: fixed;
+    bottom: calc(16px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(760px, 90vw);
+    text-align: center;
+    z-index: 26;
+    pointer-events: none;
+    display: none;
+  }
+  #subtitleBox.active { display: block; }
+  .sub-mm {
+    background: rgba(8, 5, 4, 0.84);
+    border: 1px solid rgba(229, 181, 90, 0.28);
+    color: var(--gold-bright);
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: clamp(13px, 2vw, 17px);
+    font-weight: 600;
+    line-height: 1.45;
+    display: inline-block;
+  }
+  .sub-en {
+    display: block;
+    font-size: clamp(11px, 1.4vw, 13px);
+    color: var(--text);
+    margin-top: 3px;
+    text-shadow: 0 2px 6px #000;
+  }
+
+  #toastBanner {
+    position: fixed;
+    top: calc(56px + var(--safe-top));
+    right: calc(14px + var(--safe-right));
+    z-index: 55;
+    background: rgba(24, 15, 11, 0.94);
+    border: 1px solid var(--gold);
+    color: var(--gold-bright);
+    padding: 8px 14px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    max-width: 300px;
+  }
+  #toastBanner.show { opacity: 1; transform: translateY(0); }
+
+  #dialogueBox {
+    position: fixed;
+    bottom: calc(18px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(820px, 94vw);
+    background: rgba(15, 9, 8, 0.95);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 12px 16px;
+    z-index: 36;
+    display: none;
+    pointer-events: auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+  }
+  #dialogueBox.open { display: block; }
+  .dlg-speaker { color: var(--gold-bright); font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .dlg-mm { color: var(--text); font-size: 15px; line-height: 1.5; margin: 0 0 4px; }
+  .dlg-en { color: var(--text-dim); font-size: 12.5px; margin: 0 0 10px; }
+  .dlg-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  #touchControls {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+    display: none;
+  }
+  body.playing.touch-enabled #touchControls { display: block; }
+  body.cinematic #touchControls { display: none !important; }
+
+  #joystickZone {
+    position: fixed;
+    bottom: calc(20px + var(--safe-bottom));
+    left: calc(20px + var(--safe-left));
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(229, 181, 90, 0.35);
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  #joystickKnob {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    left: 50%;
+    top: 50%;
+    margin-left: -26px;
+    margin-top: -26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffd985, #b67b26);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    pointer-events: none;
+  }
+
+  #actionPad {
+    position: fixed;
+    bottom: calc(16px + var(--safe-bottom));
+    right: calc(16px + var(--safe-right));
+    width: 265px;
+    height: 175px;
+    pointer-events: none;
+  }
+
+  .t-btn {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(24, 15, 12, 0.78);
+    border: 1.5px solid rgba(229, 181, 90, 0.5);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    pointer-events: auto;
+    touch-action: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+  }
+  .t-btn.pressed {
+    transform: scale(0.92);
+    background: rgba(229, 181, 90, 0.35);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+  }
+  .t-btn.primary {
+    width: 58px;
+    height: 58px;
+    background: rgba(145, 36, 30, 0.85);
+    border-color: #ff8c7a;
+  }
+
+  #btnLight { right: 8px; bottom: 54px; }
+  #btnHeavy { right: 64px; bottom: 10px; }
+  #btnJump { right: 68px; bottom: 72px; }
+  #btnDodge { right: 124px; bottom: 14px; }
+  #btnParry { right: 126px; bottom: 74px; }
+  #btnSkill { right: 16px; bottom: 118px; }
+  #btnUlt { right: 74px; bottom: 130px; }
+  #btnGrapple { right: 132px; bottom: 130px; }
+  #btnInteract { right: 184px; bottom: 58px; }
+
+  .ctrl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .remap-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 10, 8, 0.7);
+    border: 1px solid rgba(229, 181, 90, 0.2);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+  .remap-key {
+    background: rgba(229, 181, 90, 0.2);
+    color: var(--gold-bright);
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-family: monospace;
+    cursor: pointer;
+    border: 1px solid rgba(229, 181, 90, 0.4);
+  }
+
+  @media (orientation: portrait) and (max-width: 768px) {
+    #rotateBanner { display: block; }
+  }
+</style>
 </head>
 <body>
-    <marquee behavior="" direction=""><h1 style="background-color: rgb(160, 125, 192);color: rgb(67, 211, 0);">Myanmar</h1></marquee>
-    <p></p>
-    <p style="background-color: aquamarine;">Myanmar,[d] officially the Republic of the Union of Myanmar[e] and also referred to as Burma (the official English name until 1989), is a country in northwest Southeast Asia. It is the largest country by area in Mainland Southeast Asia and had a population of about 51 million at the 2024 census. It is bordered by India and Bangladesh to the northwest, China to the northeast, Laos and Thailand to the east and southeast, and the Andaman Sea and the Bay of Bengal to the south and southwest. The country's capital city is Naypyidaw, while its largest city is Yangon (formerly Rangoon).[6]</p>
-    <h2>Yangon</h2>
-    <p>Yangon,[a] also romanized in English as Rangoon,[5][6] is the capital city of the Yangon Region and the largest city of Myanmar. Yangon was the capital city of Myanmar until 2005 and served as such until 2006, when the military government relocated the administrative functions to the purpose-built capital city of Naypyidaw in north central Myanmar.[7] With over five million people, Yangon is Myanmar's most populous city and its most important commercial centre.Yangon,[a] also romanized in English as Rangoon,[5][6] is the capital city of the Yangon Region and the largest city of Myanmar. Yangon was the capital city of Myanmar until 2005 and served as such until 2006, when the military government relocated the administrative functions to the purpose-built capital city of Naypyidaw in north central Myanmar.[7] With over five million people, Yangon is Myanmar's most populous city and its most important commercial centre.Yangon,[a] also romanized in English as Rangoon,[5][6] is the capital city of the Yangon Region and the largest city of Myanmar. Yangon was the capital city of Myanmar until 2005 and served as such until 2006, when the military government relocated the administrative functions to the purpose-built capital city of Naypyidaw in north central Myanmar.[7] With over five million people, Yangon is Myanmar's most populous city and its most important commercial centre.</p>
-    <p>This is <b><a href="https://www.youtube.com/watch?v=uLwpVPScaUo"> TBH LAB</b></a></p>
-    <p>This is <strong> strongly important tet</strong>.</p>
-    <p>This is <i>italic text</i>.</p>
-    <p>This is <em>emphasized text</em></p>
-    <p>This is <mark> highlighted text</mark></p>
-    <p>This is <code>computer code</code></p>
-    <p>This is <small>smaller text</small></p>
-    <p>This is <sub>subscript</sub> and <sup>superscipt text</sup></p>
-    <p>this is <del>deleted text</del></p>
-    <p>This is <ins>inserted text</ins> </p>
-    <a href="https://www.google.com/search?sca_esv=c5a9a2cb8f680273&sxsrf=AKL5yDhrGrXrBzGsiXNyFCYHygEZIzt8Pg:1795234136437&udm=2&fbs=ACAhTvwdifjn2dKXmjtOfBxVFl_koHVe5RLSnJlTH2QYaq_YVfnwA0k4pzZ9d-ZbRA0e6tww_WM0IOMLGL1GAIRO4RsbevOqq8OGDuHYzDoEj6iR6JD9QbDV_GVFlvlw_1aP_Fp9m3rZvF7DOHb48oS1GMmZAyniTvQhGx9FjWXSBj0Be2F2DYaV_qOezpfp4qUeIFq5o-FYczbqhGFgI4jCyHPqaeC7Vw&q=Demon+slayer&sa=X&ved=2ahUKEwjMmfanmJiYAxUFwjgGHRfWGXYQtKgLegQIGxAB&biw=1242&bih=586&dpr=1.1#sv=CAMSURoyKhBlLTB0ek45YmpfUXBQa1JNMg4wdHpOOWJqX1FwUGtSTToOR0o4cWxyNXkzd2xTY00gBCoXCgFzEhBlLTB0ek45YmpfUXBQa1JNGAEwARgHIMWOquoOSggQAhgBIAIoAQ"><img src="Pic-1.jpg"  alt="ငှက်ပုံ" width="400px" height="700px"></a>
-    <a href="https://www.google.com/search?q=chainsaw+man&sca_esv=c5a9a2cb8f680273&udm=2&biw=1242&bih=586&sxsrf=AKL5yDhgitdtHzm80Nmm461gMjkhuTR3WQ%3A1795234137923&ei=WRkBa9fvN4Wb4-EP1dDAwQk&oq=chain&gs_lp=Egtnd3Mtd2l6LWltZyIFY2hhaW4qDQgAGIAEGIoFGEMYsQMyDRAAGIAEGIoFGEMYsQMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGEMyChAAGIAEGIoFGENI9RNQAFjsBHAAeACQAQCYAWqgAcUDqgEDNC4xuAEByAEA-AEBmAIFoALtA8ICBxAjGMkCGCfCAggQABiABBixA8ICCxAAGIAEGIoFGLEDmAMAkgcDMy4yoAfiHbIHAzMuMrgH7QPCBwUyLTQuMcgHHYAIAQ&sclient=gws-wiz-img#sv=CAMSURoyKhBlLUxEUFJsajI4UHBEX2lNMg5MRFBSbGoyOFBwRF9pTToOY0t1R05IMXgtRzV5Z00gBCoXCgFzEhBlLUxEUFJsajI4UHBEX2lNGAEwARgHIKCMsdMESggQAhgBIAIoAQ"><img src="Pic-2.jpg" alt="" width="400px" height="700px"></a>
-    <a href="https://www.youtube.com/watch?v=8OomIu5JJwQ"><img src="Pic-3.jpg" alt="" width="400px" height="700px"></a>
+<div id="app">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="rotateBanner">Landscape recommended for wider martial arts view</div>
+  <div id="letterboxTop" class="letterbox"></div>
+  <div id="letterboxBottom" class="letterbox"></div>
+  <div id="fadeCurtain"></div>
+  <div id="toastBanner"></div>
+
+  <!-- MAIN MENU -->
+  <section id="mainMenu" class="screen visible">
+    <div class="menu-header">
+      <h1 class="title-mm">ရာဇဝင်မဲ့သူ</h1>
+      <div class="title-en">THE NAMELESS SOVEREIGN</div>
+      <p class="tagline">"Every legend begins with a forgotten name."</p>
+    </div>
+
+    <div class="menu-body">
+      <nav class="menu-nav" aria-label="Main Menu">
+        <button class="btn-rpg" id="btnNewGame"><span>NEW GAME</span><span>သစ်စတင်</span></button>
+        <button class="btn-rpg" id="btnContinue"><span>CONTINUE</span><span>ဆက်သွားရန်</span></button>
+        <button class="btn-rpg" id="btnLoadGame"><span>LOAD GAME</span><span>သိမ်းဆည်းမှု</span></button>
+        <button class="btn-rpg" id="btnMenuChar"><span>CHARACTER</span><span>သီဟ (THIHA)</span></button>
+        <button class="btn-rpg" id="btnMenuSettings"><span>SETTINGS</span><span>ဆက်တင်များ</span></button>
+        <button class="btn-rpg" id="btnMenuCredits"><span>CREDITS</span><span>ဖန်တီးသူများ</span></button>
+        <button class="btn-rpg danger" id="btnExitTitle"><span>EXIT TO TITLE</span><span>ပင်မစာမျက်နှာ</span></button>
+      </nav>
+
+      <div class="menu-status-card" id="menuStatusCard">
+        <div><strong>Region:</strong> The Forgotten Village (ပျောက်ဆုံးရွာ)</div>
+        <div><strong>Protagonist:</strong> Thiha (သီဟ, Age 23)</div>
+        <div><strong>Active Save:</strong> <span id="activeSaveSummary">None yet</span></div>
+        <div style="margin-top:6px; color: var(--gold);">Move: WASD/Arrows • Jump: Space • Dodge: Shift • Parry: F<br/>Light: J • Heavy: K • Skill: L • Ult: U • Grapple: G • Switch: Q</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IN-GAME HUD -->
+  <div id="hud">
+    <div class="hud-top-left">
+      <div class="bar-wrap hp">
+        <div id="hudHpFill" class="bar-fill fill-hp"></div>
+        <div class="bar-label"><span id="hudHpText">HP 120 / 120</span><span id="hudLvText">LV.1</span></div>
+      </div>
+      <div class="bar-wrap">
+        <div id="hudStmFill" class="bar-fill fill-stm"></div>
+        <div class="bar-label"><span>STAMINA</span><span id="hudStmText">100</span></div>
+      </div>
+      <div class="bar-wrap">
+        <div id="hudChiFill" class="bar-fill fill-chi"></div>
+        <div class="bar-label"><span>CHI</span><span id="hudChiText">60</span></div>
+      </div>
+      <div style="font-size:11px; color:var(--gold-bright); text-shadow:0 1px 3px #000; display:flex; gap:8px; flex-wrap:wrap;">
+        <span id="hudWeaponLabel">Weapon: Long Sword</span>
+        <span id="hudActiveSkillLabel">Skill: Moonlight Slash</span>
+        <span id="hudZoneLabel">Forgotten Village</span>
+      </div>
+    </div>
+
+    <div class="hud-top-right">
+      <button class="hud-chip" data-open-tab="character">Char [C]</button>
+      <button class="hud-chip" data-open-tab="inventory">Bag [B]</button>
+      <button class="hud-chip" data-open-tab="skills">Skills</button>
+      <button class="hud-chip" data-open-tab="quests">Quests</button>
+      <button class="hud-chip" data-open-tab="map">Map [M]</button>
+      <button class="hud-chip" data-open-tab="journal">Journal [N]</button>
+      <button class="hud-chip" id="hudSaveBtn">Save</button>
+      <button class="hud-chip" id="hudSettingsBtn">⚙</button>
+      <button class="hud-chip" id="hudTitleBtn">Title</button>
+    </div>
+
+    <div id="bossHud">
+      <div class="boss-title-row">
+        <span id="bossNameLabel">THE ASHEN EXECUTIONER</span>
+        <span id="bossPhaseLabel">Phase I</span>
+      </div>
+      <div class="bar-wrap hp">
+        <div id="bossHpFill" class="bar-fill fill-hp"></div>
+        <div class="bar-label"><span>VITALITY</span><span id="bossHpText">420 / 420</span></div>
+      </div>
+      <div class="bar-wrap">
+        <div id="bossPosFill" class="bar-fill fill-pos"></div>
+        <div class="bar-label"><span>POSTURE</span><span id="bossPosText">0%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOUCH CONTROLS -->
+  <div id="touchControls">
+    <div id="joystickZone">
+      <div id="joystickKnob"></div>
+    </div>
+    <div id="actionPad">
+      <button class="t-btn primary" id="btnLight" data-key="KeyJ">ATK<br/>(J)</button>
+      <button class="t-btn" id="btnHeavy" data-key="KeyK">HVY<br/>(K)</button>
+      <button class="t-btn" id="btnJump" data-key="Space">JMP</button>
+      <button class="t-btn" id="btnDodge" data-key="ShiftLeft">DODGE</button>
+      <button class="t-btn" id="btnParry" data-key="KeyF">PARRY</button>
+      <button class="t-btn" id="btnSkill" data-key="KeyL">SKILL</button>
+      <button class="t-btn" id="btnUlt" data-key="KeyU">ULT</button>
+      <button class="t-btn" id="btnGrapple" data-key="KeyG">GRP</button>
+      <button class="t-btn" id="btnInteract" data-key="KeyE">ACT</button>
+    </div>
+  </div>
+
+  <div id="subtitleBox">
+    <div id="subMm" class="sub-mm"></div>
+    <span id="subEn" class="sub-en"></span>
+  </div>
+
+  <div id="dialogueBox">
+    <div id="dlgSpeaker" class="dlg-speaker">Elder Kyaw</div>
+    <p id="dlgMm" class="dlg-mm"></p>
+    <p id="dlgEn" class="dlg-en"></p>
+    <div id="dlgChoices" class="dlg-choices"></div>
+  </div>
+
+  <div id="rpgModal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="panel">
+      <div class="panel-header">
+        <h2 id="modalTitle" class="panel-title">RPG MENU</h2>
+        <div class="tab-bar" id="modalTabs">
+          <button class="tab-btn" data-tab="character">Character</button>
+          <button class="tab-btn" data-tab="inventory">Inventory</button>
+          <button class="tab-btn" data-tab="skills">Skills</button>
+          <button class="tab-btn" data-tab="quests">Quests</button>
+          <button class="tab-btn" data-tab="map">World Map</button>
+          <button class="tab-btn" data-tab="journal">Journal</button>
+          <button class="tab-btn" data-tab="saves">Save / Load</button>
+          <button class="tab-btn" data-tab="settings">Settings</button>
+          <button class="tab-btn" data-tab="credits">Credits</button>
+        </div>
+        <button class="btn-rpg small" id="closeModalBtn">Close ✕</button>
+      </div>
+      <div id="modalBody" class="panel-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================================================================
+     1. AUDIO ENGINE (Web Audio API Procedural Soundscape & SFX)
+     ========================================================================= */
+  const AudioEngine = (() => {
+    let ctx = null;
+    let masterGain = null;
+    let musicGain = null;
+    let sfxGain = null;
+    let droneOsc1 = null;
+    let droneOsc2 = null;
+    let unlocked = false;
+
+    const settings = { master: 0.75, music: 0.45, sfx: 0.85 };
+
+    function unlock() {
+      if (unlocked) {
+        if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+        return;
+      }
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctx = new AC();
+      masterGain = ctx.createGain();
+      musicGain = ctx.createGain();
+      sfxGain = ctx.createGain();
+      musicGain.connect(masterGain);
+      sfxGain.connect(masterGain);
+      masterGain.connect(ctx.destination);
+      applyVolumes();
+      startAmbientDrone();
+      unlocked = true;
+    }
+
+    function applyVolumes() {
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      masterGain.gain.setTargetAtTime(settings.master, now, 0.04);
+      musicGain.gain.setTargetAtTime(settings.music * 0.25, now, 0.08);
+      sfxGain.gain.setTargetAtTime(settings.sfx, now, 0.03);
+    }
+
+    function startAmbientDrone() {
+      if (!ctx || droneOsc1) return;
+      droneOsc1 = ctx.createOscillator();
+      droneOsc2 = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 340;
+      droneOsc1.type = "sawtooth";
+      droneOsc1.frequency.value = 110;
+      droneOsc2.type = "triangle";
+      droneOsc2.frequency.value = 164.81;
+      droneOsc1.connect(filter);
+      droneOsc2.connect(filter);
+      filter.connect(musicGain);
+      droneOsc1.start();
+      droneOsc2.start();
+    }
+
+    function playTone(freq, endFreq, dur, type = "triangle", gainPeak = 0.22, target = "sfx") {
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (endFreq !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), now + dur);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(gainPeak, now + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(g);
+      g.connect(target === "music" ? musicGain : sfxGain);
+      osc.start(now);
+      osc.stop(now + dur + 0.02);
+    }
+
+    function playNoise(dur, filterFreq, gainPeak = 0.2) {
+      if (!ctx) return;
+      const sampleRate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * dur));
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = filterFreq;
+      filter.Q.value = 1.4;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(gainPeak, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      src.connect(filter);
+      filter.connect(g);
+      g.connect(sfxGain);
+      src.start();
+    }
+
+    return {
+      unlock,
+      setVolumes(m, mu, s) {
+        settings.master = m; settings.music = mu; settings.sfx = s;
+        applyVolumes();
+      },
+      uiClick() { unlock(); playTone(587.33, 783.99, 0.08, "sine", 0.14); },
+      slash(heavy = false) {
+        unlock();
+        playNoise(heavy ? 0.22 : 0.13, heavy ? 680 : 1250, heavy ? 0.28 : 0.18);
+        playTone(heavy ? 240 : 420, heavy ? 75 : 140, heavy ? 0.2 : 0.12, "sawtooth", 0.12);
+      },
+      hit(heavy = false) {
+        unlock();
+        playTone(heavy ? 130 : 190, 48, heavy ? 0.18 : 0.1, "square", heavy ? 0.25 : 0.16);
+        playNoise(0.09, 900, 0.2);
+      },
+      parry() {
+        unlock();
+        playTone(1760, 1760, 0.35, "sine", 0.26);
+        playTone(2637, 2637, 0.28, "triangle", 0.18);
+      },
+      dodge() {
+        unlock();
+        playNoise(0.14, 1800, 0.14);
+        playTone(300, 520, 0.11, "sine", 0.1);
+      },
+      jump() { unlock(); playTone(190, 410, 0.13, "sine", 0.14); },
+      step() { unlock(); playNoise(0.045, 520, 0.07); },
+      skill() {
+        unlock();
+        playTone(330, 880, 0.24, "triangle", 0.2);
+        playTone(495, 990, 0.28, "sine", 0.14);
+      },
+      grapple() {
+        unlock();
+        playTone(520, 960, 0.14, "sine", 0.16);
+        playNoise(0.08, 2200, 0.12);
+      },
+      gong() {
+        unlock();
+        playTone(110, 98, 1.1, "triangle", 0.28, "music");
+        playTone(220, 216, 0.9, "sine", 0.14, "music");
+      }
+    };
+  })();
+
+  /* =========================================================================
+     2. DATA DEFINITIONS (5 Weapons, Skill Library, Quests, Regions, Journal)
+     ========================================================================= */
+  const WEAPONS = {
+    sword: {
+      id: "sword",
+      name: "Iron Dao (သံဓား)",
+      cls: "Long Sword",
+      atkBonus: 14,
+      speedMult: 1.05,
+      reach: 76,
+      postureDmg: 17,
+      ultName: "Heaven-Splitting Crescent",
+      desc: "Balanced ancient blade with crisp combos and reliable posture damage."
+    },
+    dual: {
+      id: "dual",
+      name: "Twin Swallow Blades (ပျံလွှားဓားမြှောင်)",
+      cls: "Dual Blades",
+      atkBonus: 12,
+      speedMult: 1.42,
+      reach: 60,
+      postureDmg: 12,
+      ultName: "Crimson Tempest Flurry",
+      desc: "Blinding rapid strikes that build Chi quickly and shred unguarded foes."
+    },
+    spear: {
+      id: "spear",
+      name: "Irrawaddy Reed Spear (လှံရှည်)",
+      cls: "Spear",
+      atkBonus: 17,
+      speedMult: 0.98,
+      reach: 112,
+      postureDmg: 19,
+      ultName: "Piercing Dragon Gale",
+      desc: "Long-reach polearm punishing enemies from safe spacing."
+    },
+    greatsword: {
+      id: "greatsword",
+      name: "Monolith Cleaver (ကျောက်တုံးခွဲဓားကြီး)",
+      cls: "Greatsword",
+      atkBonus: 25,
+      speedMult: 0.74,
+      reach: 98,
+      postureDmg: 34,
+      ultName: "Earth-Shattering Cleave",
+      desc: "Heavy blade dealing massive damage and shattering enemy posture."
+    },
+    unarmed: {
+      id: "unarmed",
+      name: "Inwa Barehand Style (လက်သိုင်းပညာ)",
+      cls: "Unarmed Martial Arts",
+      atkBonus: 14,
+      speedMult: 1.28,
+      reach: 64,
+      postureDmg: 24,
+      ultName: "Inner Meridian Blast",
+      desc: "Palm strikes, kicks, and internal force bursts."
+    }
+  };
+
+  const SKILL_CATALOG = [
+    { id: "moonlight_slash", cat: "Sword", name: "Moonlight Slash", mm: "လရောင်ဓားချက်", costChi: 15, dmgMult: 2.1, desc: "Crescent energy arc slicing forward." },
+    { id: "rising_dragon", cat: "Sword", name: "Rising Dragon", mm: "နဂါးထိုးတက်ချက်", costChi: 20, dmgMult: 2.45, desc: "Upward leaping strike with heavy posture impact." },
+    { id: "shadow_cleave", cat: "Sword", name: "Shadow Cleave", mm: "အရိပ်ခွဲဓားချက်", costChi: 25, dmgMult: 2.8, desc: "Blink-step strike through enemies." },
+    { id: "crimson_cross", cat: "Dual Blades", name: "Crimson Cross", mm: "သွေးနီကြက်ခြေခတ်", costChi: 18, dmgMult: 2.3, desc: "Crossing twin slashes at high speed." },
+    { id: "dragon_thrust", cat: "Spear", name: "Dragon Thrust", mm: "နဂါးထိုးချက်", costChi: 18, dmgMult: 2.25, desc: "Long-range thrust piercing straight ahead." },
+    { id: "iron_palm", cat: "Unarmed", name: "Iron Palm", mm: "သံဖဝါးရိုက်ချက်", costChi: 15, dmgMult: 2.0, desc: "Concussive palm strike shattering guard." },
+    { id: "air_dash", cat: "Movement", name: "Air Dash", mm: "ဝေဟင်ပြေးလွှားမှု", costChi: 12, dmgMult: 0, desc: "Mid-air horizontal burst with invulnerability." },
+    { id: "double_jump", cat: "Movement", name: "Double Jump", mm: "နှစ်ဆင့်ခုန်ပျံမှု", costChi: 0, dmgMult: 0, desc: "Second mid-air jump for cliffs and ledges." },
+    { id: "healing_breath", cat: "Internal Energy", name: "Healing Breath", mm: "ကုစားရှူရှိုက်ခြင်း", costChi: 25, healAmt: 42, dmgMult: 0, desc: "Restore Vitality using disciplined internal breath." },
+    { id: "iron_body", cat: "Internal Energy", name: "Iron Body", mm: "သံကိုယ်ခံစွမ်းအား", costChi: 20, dmgMult: 0, desc: "Halve incoming damage for 5 seconds." }
+  ];
+
+  const REGIONS = [
+    { id: "village", name: "The Forgotten Village", mm: "ပျောက်ဆုံးရွာ", unlocked: true, desc: "Mist-draped mountain terraces where Thiha trained before the night of ash." },
+    { id: "bamboo", name: "The Bamboo Wilderness", mm: "ဝါးတောရိုင်း", unlocked: true, desc: "Towering bamboo groves, collapsing stone bridges, ropes, and grapple points." },
+    { id: "capital", name: "The Golden Capital", mm: "ရွှေမြို့တော်", unlocked: false, desc: "Gilded spires, bustling markets, and secretive royal courts." },
+    { id: "battlefield", name: "The Fallen Battlefield", mm: "ကျဆုံးစစ်မြေပြင်", unlocked: false, desc: "Scorched banners and broken siege towers echoing with war drums." },
+    { id: "sanctuary", name: "Black Lotus Sanctuary", mm: "ကြာနက်ခန်းမ", unlocked: false, desc: "Subterranean halls of the Black Lotus assassins." },
+    { id: "monastery", name: "The Sky Monastery", mm: "မိုးကောင်းဘုန်းကြီးကျောင်း", unlocked: false, desc: "High-altitude cliffside pagodas reached via parkour." },
+    { id: "palace", name: "The Imperial Palace", mm: "နန်းတော်ကြီး", unlocked: false, desc: "Seat of the Sovereign where the final truth awaits." }
+  ];
+
+  const JOURNAL_ENTRIES = [
+    {
+      title: "The Night of Ash (ပြာမှုန်ည)",
+      mm: "သီဟ၏ ကျေးရွာသည် ကြာနက်ဂိုဏ်း၏ မီးလောင်တိုက်သွင်းမှုကြောင့် ပျက်စီးခဲ့ရသည်။",
+      en: "Thiha's mountain village fell in a single night under the Black Lotus banner. Only his blade and unanswered questions remained."
+    },
+    {
+      title: "Grapple, Rope & Collapsing Stone (ကြိုးဆွဲ၊ ကြိုးလွှဲနှင့် ကျောက်တံတား)",
+      mm: "ချောက်ကမ်းပါးများကို ဖြတ်ကျော်ရန် ကြိုးလွှဲခြင်းနှင့် ချိတ်ကြိုးပစ်ခြင်းတို့ကို အသုံးပြုပါ။",
+      en: "Latch onto hanging ropes or fire your grapple hook (G / GRP) toward overhead anchors before crumbling stones give way."
+    },
+    {
+      title: "The Way of Posture (ဟန်ချက်လမ်းစဉ်)",
+      mm: "ဓားချက်တိုင်းတွင် ဟန်ချက်ရှိသည်။ အချိန်ကိုက် ခုခံခြင်းသည် ရန်သူ၏ အကာအကွယ်ကို ဖြိုခွဲနိုင်သည်။",
+      en: "Every strike tests balance. A well-timed Parry rings steel and shatters an enemy's posture for a decisive counter."
+    }
+  ];
+
+  /* =========================================================================
+     3. GAME STATE & SAVE SYSTEM
+     ========================================================================= */
+  const STORAGE_PREFIX = "NamelessSovereign_v1_";
+
+  function createDefaultState(slotName = "Slot 1") {
+    return {
+      slotName,
+      savedAt: null,
+      chapter: 1,
+      regionId: "village",
+      choicePath: "unsworn",
+      relationshipElder: 0,
+      gold: 120,
+      xp: 0,
+      nextXp: 100,
+      level: 1,
+      skillPoints: 2,
+      hp: 120,
+      maxHp: 120,
+      stamina: 100,
+      maxStamina: 100,
+      chi: 60,
+      maxChi: 60,
+      attrs: { might: 12, agility: 12, vitality: 12, spirit: 12 },
+      equippedWeapon: "sword",
+      activeSkillId: "moonlight_slash",
+      unlockedWeapons: ["sword", "dual", "spear", "greatsword", "unarmed"],
+      unlockedSkills: ["moonlight_slash", "double_jump", "healing_breath", "air_dash"],
+      skillLevels: { moonlight_slash: 1, double_jump: 1, healing_breath: 1, air_dash: 1 },
+      inventory: [
+        { id: "herb_flask", type: "Consumable", name: "Mountain Herb Flask (တောင်ပေါ်ဆေးဘူး)", qty: 3, heal: 45 },
+        { id: "jade_pendant", type: "Accessory", name: "Carved Jade Charm (ကျောက်စိမ်းလက်ဖွဲ့)", qty: 1, bonus: "+8 Max HP" },
+        { id: "iron_ore", type: "Material", name: "Cold Mountain Iron (သံစိမ်း)", qty: 4 },
+        { id: "village_seal", type: "Quest Item", name: "Forgotten Village Seal (ရွာဟောင်းတံဆိပ်)", qty: 1 }
+      ],
+      quests: [
+        {
+          id: "q_main_1",
+          type: "Main Quest",
+          title: "Ashes of the Dawn Village (အရုဏ်ဦးရွာ၏ ပြာမှုန်များ)",
+          status: "Active",
+          objective: "Speak with Elder Kyaw and defeat the Ashen Executioner on the mountain ridge.",
+          progress: "0 / 1 Boss Defeated"
+        },
+        {
+          id: "q_side_1",
+          type: "Side Quest",
+          title: "Echoes on the Cliff Ledge (ကျောက်ကမ်းပါးပေါ်မှ ပဲ့တင်သံ)",
+          status: "Active",
+          objective: "Climb or grapple to the high stone ledges and collect the Lost Scroll.",
+          progress: "0 / 1 Scroll Found"
+        },
+        {
+          id: "q_comp_1",
+          type: "Companion Quest",
+          title: "Elder Kyaw's Last Counsel (အဘိုးကျော်၏ နောက်ဆုံးသွန်သင်ချက်)",
+          status: "Active",
+          objective: "Hear Elder Kyaw's account of the Black Lotus raid.",
+          progress: "Pending"
+        }
+      ],
+      scrollCollected: false,
+      bossDefeated: false,
+      settings: {
+        master: 0.75,
+        music: 0.45,
+        sfx: 0.85,
+        fullscreen: false,
+        graphics: "HIGH",
+        resScale: 1.0,
+        language: "Bilingual (MM + EN)",
+        screenShake: true,
+        particles: "HIGH",
+        touchMode: "AUTO"
+      },
+      keybinds: {
+        left: "KeyA",
+        right: "KeyD",
+        up: "KeyW",
+        down: "KeyS",
+        jump: "Space",
+        light: "KeyJ",
+        heavy: "KeyK",
+        skill: "KeyL",
+        martial: "KeyU",
+        ult: "KeyI",
+        grapple: "KeyG",
+        dodge: "ShiftLeft",
+        parry: "KeyF",
+        switchWeapon: "KeyQ",
+        interact: "KeyE"
+      }
+    };
+  }
+
+  let state = createDefaultState("Autosave");
+
+  function saveToSlot(slotKey) {
+    try {
+      const payload = JSON.parse(JSON.stringify(state));
+      payload.savedAt = new Date().toLocaleString();
+      payload.playerPos = { x: player.x, y: player.y };
+      localStorage.setItem(STORAGE_PREFIX + slotKey, JSON.stringify(payload));
+      refreshSaveSummary();
+      showToast(`Saved to ${slotKey} (${payload.savedAt})`);
+    } catch {
+      showToast("Save failed (storage limit or restricted mode)");
+    }
+  }
+
+  function loadFromSlot(slotKey) {
+    try {
+      const raw = localStorage.getItem(STORAGE_PREFIX + slotKey);
+      if (!raw) return false;
+      const loaded = JSON.parse(raw);
+      const base = createDefaultState(slotKey);
+      state = Object.assign(base, loaded, {
+        attrs: Object.assign(base.attrs, loaded.attrs || {}),
+        settings: Object.assign(base.settings, loaded.settings || {}),
+        keybinds: Object.assign(base.keybinds, loaded.keybinds || {})
+      });
+      applySettings();
+      if (loaded.playerPos) {
+        player.x = loaded.playerPos.x;
+        player.y = loaded.playerPos.y;
+        player.vx = 0;
+        player.vy = 0;
+      }
+      refreshSaveSummary();
+      showToast(`Loaded ${slotKey}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function refreshSaveSummary() {
+    const autoRaw = localStorage.getItem(STORAGE_PREFIX + "autosave");
+    const el = document.getElementById("activeSaveSummary");
+    if (!el) return;
+    if (autoRaw) {
+      try {
+        const d = JSON.parse(autoRaw);
+        el.textContent = `Lv.${d.level} • ${d.savedAt || "Saved"}`;
+      } catch {
+        el.textContent = "Autosave present";
+      }
+    } else {
+      el.textContent = "No save yet";
+    }
+  }
+
+  /* =========================================================================
+     4. CANVAS, PARKOUR ELEMENTS (Collapsing Bridges, Ropes, Grapple Anchors)
+     ========================================================================= */
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const WORLD_W = 3400;
+  const WORLD_H = 1100;
+
+  // type: 'solid' | 'climb' | 'oneway' | 'moving' | 'collapsing'
+  function createWorldPlatforms() {
+    return [
+      { x: 0, y: 840, w: 1260, h: 260, type: "solid" },
+      { x: 1520, y: 840, w: 660, h: 260, type: "solid" },
+      { x: 2290, y: 780, w: 1110, h: 320, type: "solid" },
+
+      { x: -40, y: 0, w: 40, h: WORLD_H, type: "solid" },
+      { x: WORLD_W, y: 0, w: 40, h: WORLD_H, type: "solid" },
+
+      // Parkour terraces, wall-jump shaft & collapsing stone bridge
+      { x: 340, y: 720, w: 180, h: 20, type: "oneway" },
+      { x: 580, y: 420, w: 36, h: 420, type: "climb" },
+      { x: 780, y: 360, w: 36, h: 400, type: "climb" },
+      { x: 580, y: 390, w: 260, h: 26, type: "solid" },
+      { x: 920, y: 660, w: 170, h: 22, type: "oneway" },
+
+      // Collapsing stone bridge over chasm (x: 1280..1500)
+      { x: 1280, y: 780, w: 95, h: 18, type: "collapsing", state: "stable", timer: 0 },
+      { x: 1395, y: 750, w: 95, h: 18, type: "collapsing", state: "stable", timer: 0 },
+
+      // Moving platform & elevated shrines
+      { x: 1620, y: 690, w: 220, h: 22, type: "oneway" },
+      { x: 1880, y: 570, w: 200, h: 22, type: "oneway" },
+
+      // Boss Arena steps
+      { x: 2520, y: 650, w: 150, h: 20, type: "oneway" },
+      { x: 2960, y: 650, w: 150, h: 20, type: "oneway" }
+    ];
+  }
+
+  function createRopes() {
+    return [
+      { anchorX: 1145, anchorY: 430, length: 195, angle: 0.25, angVel: 0 }
+    ];
+  }
+
+  function createGrapplePoints() {
+    return [
+      { x: 875, y: 310, r: 10 },
+      { x: 1445, y: 540, r: 10 },
+      { x: 2180, y: 480, r: 10 }
+    ];
+  }
+
+  let platforms = createWorldPlatforms();
+  let ropes = createRopes();
+  let grapplePoints = createGrapplePoints();
+
+  const player = {
+    x: 180,
+    y: 780,
+    w: 34,
+    h: 58,
+    vx: 0,
+    vy: 0,
+    facing: 1,
+    onGround: false,
+    onWall: 0,
+    canDoubleJump: true,
+    attachedRope: null,
+    grappleTarget: null,
+    dashTimer: 0,
+    dashCooldown: 0,
+    rollTimer: 0,
+    parryTimer: 0,
+    invulnTimer: 0,
+    ironBodyTimer: 0,
+    attackTimer: 0,
+    attackType: null,
+    comboStep: 0,
+    comboResetTimer: 0,
+    hitAppliedThisSwing: false,
+    posture: 0,
+    maxPosture: 100,
+    animTime: 0,
+    scarfPoints: Array.from({ length: 7 }, (_, i) => ({ x: 180 - i * 6, y: 790 }))
+  };
+
+  function createEnemies() {
+    return [
+      {
+        id: "bandit_1",
+        name: "Ash Bandit (ပြာဓားပြ)",
+        kind: "Bandit",
+        x: 980,
+        y: 784,
+        w: 34,
+        h: 56,
+        vx: 0,
+        vy: 0,
+        facing: -1,
+        hp: 75,
+        maxHp: 75,
+        posture: 0,
+        maxPosture: 60,
+        atk: 11,
+        speed: 125,
+        patrolMin: 860,
+        patrolMax: 1220,
+        aiState: "patrol",
+        stateTimer: 0,
+        hitFlash: 0
+      },
+      {
+        id: "lotus_1",
+        name: "Black Lotus Assassin (ကြာနက်လုပ်ကြံသူ)",
+        kind: "Black Lotus Assassin",
+        x: 1740,
+        y: 784,
+        w: 34,
+        h: 56,
+        vx: 0,
+        vy: 0,
+        facing: -1,
+        hp: 105,
+        maxHp: 105,
+        posture: 0,
+        maxPosture: 75,
+        atk: 15,
+        speed: 185,
+        patrolMin: 1560,
+        patrolMax: 2050,
+        aiState: "patrol",
+        stateTimer: 0,
+        hitFlash: 0
+      },
+      {
+        id: "boss_executioner",
+        name: "THE ASHEN EXECUTIONER (ပြာမှုန်အာဏာသား)",
+        kind: "Boss",
+        isBoss: true,
+        x: 2820,
+        y: 710,
+        w: 54,
+        h: 72,
+        vx: 0,
+        vy: 0,
+        facing: -1,
+        hp: 420,
+        maxHp: 420,
+        posture: 0,
+        maxPosture: 120,
+        atk: 22,
+        speed: 160,
+        patrolMin: 2420,
+        patrolMax: 3220,
+        aiState: "idle",
+        stateTimer: 0,
+        phase: 1,
+        hitFlash: 0,
+        engaged: false
+      }
+    ];
+  }
+
+  let enemies = createEnemies();
+
+  const npcs = [
+    { id: "elder_kyaw", name: "Elder Kyaw (အဘိုးကျော်)", x: 270, y: 786, w: 32, h: 54 }
+  ];
+
+  const scrollPickup = { x: 700, y: 356, collected: false };
+
+  const MAX_PARTICLES = 180;
+  const particles = Array.from({ length: MAX_PARTICLES }, () => ({
+    active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 3, color: "#ffd985"
+  }));
+
+  const slashes = [];
+  let camera = { x: 0, y: 0, shake: 0 };
+  let hitstopTimer = 0;
+  let slowMoTimer = 0;
+  let gameTime = 0;
+  let currentMode = "menu";
+
+  function spawnParticle(x, y, vx, vy, life, size, color) {
+    const limit = state.settings.particles === "LOW" ? 45 : state.settings.particles === "MEDIUM" ? 95 : MAX_PARTICLES;
+    for (let i = 0; i < limit; i++) {
+      const p = particles[i];
+      if (!p.active) {
+        p.active = true;
+        p.x = x; p.y = y; p.vx = vx; p.vy = vy;
+        p.life = life; p.maxLife = life; p.size = size; p.color = color;
+        return;
+      }
+    }
+  }
+
+  function addScreenShake(amt) {
+    if (state.settings.screenShake) camera.shake = Math.max(camera.shake, amt);
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById("toastBanner");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  let subtitleTimeout = null;
+  function showSubtitle(mm, en, duration = 3800) {
+    const box = document.getElementById("subtitleBox");
+    document.getElementById("subMm").textContent = mm;
+    document.getElementById("subEn").textContent = en || "";
+    box.classList.add("active");
+    clearTimeout(subtitleTimeout);
+    if (duration > 0) subtitleTimeout = setTimeout(() => box.classList.remove("active"), duration);
+  }
+
+  /* =========================================================================
+     5. INPUT HANDLING (Keyboard + Multi-Touch Joystick & Action Pad)
+     ========================================================================= */
+  const keysDown = new Set();
+  const justPressed = new Set();
+  let waitingRemapAction = null;
+
+  function pressVirtualCode(code, down) {
+    AudioEngine.unlock();
+    if (down) {
+      if (!keysDown.has(code)) justPressed.add(code);
+      keysDown.add(code);
+    } else {
+      keysDown.delete(code);
+    }
+  }
+
+  window.addEventListener("keydown", (e) => {
+    AudioEngine.unlock();
+    if (waitingRemapAction) {
+      e.preventDefault();
+      state.keybinds[waitingRemapAction] = e.code;
+      waitingRemapAction = null;
+      showToast("Key remapped to " + e.code);
+      renderModalTab("settings");
+      return;
+    }
+    if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
+    if (!keysDown.has(e.code)) justPressed.add(e.code);
+    keysDown.add(e.code);
+
+    if (currentMode === "playing") {
+      if (e.code === "KeyC") openModal("character");
+      else if (e.code === "KeyB") openModal("inventory");
+      else if (e.code === "KeyM") openModal("map");
+      else if (e.code === "KeyN") openModal("journal");
+      else if (e.code === "Escape") {
+        if (document.getElementById("rpgModal").classList.contains("open")) closeModal();
+        else openModal("settings");
+      }
+    }
+  });
+
+  window.addEventListener("keyup", (e) => keysDown.delete(e.code));
+
+  document.querySelectorAll(".t-btn[data-key]").forEach((btn) => {
+    const code = btn.getAttribute("data-key");
+    const onDown = (ev) => { ev.preventDefault(); btn.classList.add("pressed"); pressVirtualCode(code, true); };
+    const onUp = (ev) => { ev.preventDefault(); btn.classList.remove("pressed"); pressVirtualCode(code, false); };
+    btn.addEventListener("pointerdown", onDown);
+    btn.addEventListener("pointerup", onUp);
+    btn.addEventListener("pointercancel", onUp);
+    btn.addEventListener("pointerleave", onUp);
+  });
+
+  const joyZone = document.getElementById("joystickZone");
+  const joyKnob = document.getElementById("joystickKnob");
+  let joyPointerId = null;
+  let joyAxis = { x: 0, y: 0 };
+
+  function updateJoystick(clientX, clientY) {
+    const rect = joyZone.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const maxR = rect.width * 0.38;
+    let dx = clientX - cx;
+    let dy = clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist > maxR) { dx = (dx / dist) * maxR; dy = (dy / dist) * maxR; }
+    joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    joyAxis.x = dx / maxR;
+    joyAxis.y = dy / maxR;
+  }
+
+  function resetJoystick() {
+    joyPointerId = null;
+    joyAxis.x = 0; joyAxis.y = 0;
+    joyKnob.style.transform = "translate(0px, 0px)";
+  }
+
+  joyZone.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); AudioEngine.unlock();
+    joyPointerId = e.pointerId; joyZone.setPointerCapture(e.pointerId);
+    updateJoystick(e.clientX, e.clientY);
+  });
+  joyZone.addEventListener("pointermove", (e) => { if (e.pointerId === joyPointerId) updateJoystick(e.clientX, e.clientY); });
+  joyZone.addEventListener("pointerup", (e) => { if (e.pointerId === joyPointerId) resetJoystick(); });
+  joyZone.addEventListener("pointercancel", resetJoystick);
+
+  function getMoveInputX() {
+    let x = 0;
+    if (keysDown.has(state.keybinds.left) || keysDown.has("ArrowLeft")) x -= 1;
+    if (keysDown.has(state.keybinds.right) || keysDown.has("ArrowRight")) x += 1;
+    if (Math.abs(joyAxis.x) > 0.16) x = joyAxis.x;
+    return Math.max(-1, Math.min(1, x));
+  }
+
+  function getMoveInputY() {
+    let y = 0;
+    if (keysDown.has(state.keybinds.up) || keysDown.has("ArrowUp")) y -= 1;
+    if (keysDown.has(state.keybinds.down) || keysDown.has("ArrowDown")) y += 1;
+    if (Math.abs(joyAxis.y) > 0.2) y = joyAxis.y;
+    return Math.max(-1, Math.min(1, y));
+  }
+
+  /* =========================================================================
+     6. COMBAT, SKILLS, GRAPPLE, ROPE SWING & RPG MECHANICS
+     ========================================================================= */
+  function getAttackPower() {
+    const w = WEAPONS[state.equippedWeapon] || WEAPONS.sword;
+    return state.attrs.might * 1.45 + w.atkBonus + (state.level - 1) * 3.5;
+  }
+
+  function switchWeapon() {
+    const list = state.unlockedWeapons;
+    if (!list.length) return;
+    const nextId = list[(list.indexOf(state.equippedWeapon) + 1) % list.length];
+    state.equippedWeapon = nextId;
+    AudioEngine.uiClick();
+    showToast("Equipped: " + WEAPONS[nextId].name);
+  }
+
+  function triggerGrapple() {
+    if (player.grappleTarget) {
+      player.grappleTarget = null;
+      return;
+    }
+    let best = null;
+    let bestDist = 360;
+    const px = player.x + player.w / 2;
+    const py = player.y + player.h / 2;
+    for (const gp of grapplePoints) {
+      const d = Math.hypot(gp.x - px, gp.y - py);
+      if (d < bestDist) {
+        bestDist = d;
+        best = gp;
+      }
+    }
+    if (best) {
+      player.grappleTarget = best;
+      player.attachedRope = null;
+      AudioEngine.grapple();
+    } else {
+      showToast("No grapple anchor in range");
+    }
+  }
+
+  function triggerRopeOrInteract() {
+    if (player.attachedRope) {
+      player.attachedRope = null;
+      player.vx = player.facing * 290;
+      player.vy = -440;
+      AudioEngine.jump();
+      return;
+    }
+    const px = player.x + player.w / 2;
+    const py = player.y + player.h / 2;
+    for (const r of ropes) {
+      const tipX = r.anchorX + Math.sin(r.angle) * r.length;
+      const tipY = r.anchorY + Math.cos(r.angle) * r.length;
+      if (Math.hypot(px - tipX, py - tipY) < 72) {
+        player.attachedRope = r;
+        r.angVel = player.facing * 1.6;
+        AudioEngine.grapple();
+        return;
+      }
+    }
+    handleInteract();
+  }
+
+  function startAttack(kind) {
+    if (player.attackTimer > 0.08 && kind !== "skill" && kind !== "ult") return;
+    const w = WEAPONS[state.equippedWeapon] || WEAPONS.sword;
+    const spd = w.speedMult;
+
+    if (kind === "ult") {
+      if (state.chi < 35) {
+        showToast("Need 35 Chi for Ultimate");
+        return;
+      }
+      state.chi -= 35;
+      player.attackType = "ult";
+      player.attackTimer = 0.42;
+      player.hitAppliedThisSwing = false;
+      player.invulnTimer = Math.max(player.invulnTimer, 0.45);
+      player.vx = player.facing * 480;
+      AudioEngine.skill();
+      addScreenShake(10);
+      showToast(w.ultName + "!");
+      slashes.push({
+        x: player.x + player.w / 2 + player.facing * 52,
+        y: player.y + player.h / 2,
+        r: w.reach + 44,
+        facing: player.facing,
+        life: 0.28,
+        maxLife: 0.28,
+        color: "#ff6a3d"
+      });
+      return;
+    }
+
+    if (kind === "skill") {
+      const sk = SKILL_CATALOG.find((s) => s.id === state.activeSkillId) || SKILL_CATALOG[0];
+      if (!state.unlockedSkills.includes(sk.id)) {
+        showToast("Skill locked");
+        return;
+      }
+      if (state.chi < sk.costChi) {
+        showToast("Not enough Chi");
+        return;
+      }
+      state.chi -= sk.costChi;
+      const lvMult = 1 + ((state.skillLevels[sk.id] || 1) - 1) * 0.15;
+
+      if (sk.healAmt) {
+        state.hp = Math.min(state.maxHp, state.hp + Math.round(sk.healAmt * lvMult));
+        AudioEngine.skill();
+        showToast(`${sk.name} (+${Math.round(sk.healAmt * lvMult)} HP)`);
+        return;
+      }
+      if (sk.id === "iron_body") {
+        player.ironBodyTimer = 5.0 * lvMult;
+        AudioEngine.skill();
+        showToast("Iron Body Active (50% Damage Reduction)");
+        return;
+      }
+      if (sk.id === "air_dash") {
+        player.vx = player.facing * 540 * lvMult;
+        player.vy = -60;
+        player.invulnTimer = Math.max(player.invulnTimer, 0.35);
+        AudioEngine.dodge();
+        return;
+      }
+
+      player.attackType = "skill";
+      player.attackTimer = 0.32 / spd;
+      player.hitAppliedThisSwing = false;
+      player._skillMult = (sk.dmgMult || 2.0) * lvMult;
+      player.vx = player.facing * 410;
+      AudioEngine.skill();
+      slashes.push({
+        x: player.x + player.w / 2 + player.facing * 46,
+        y: player.y + player.h / 2,
+        r: w.reach + 30,
+        facing: player.facing,
+        life: 0.24,
+        maxLife: 0.24,
+        color: "#ffd985"
+      });
+      return;
+    }
+
+    if (!player.onGround) {
+      player.attackType = "air";
+      player.attackTimer = 0.25 / spd;
+    } else if (kind === "heavy") {
+      player.attackType = "heavy";
+      player.attackTimer = 0.35 / spd;
+    } else {
+      player.comboStep = (player.comboStep % 3) + 1;
+      player.comboResetTimer = 0.85;
+      player.attackType = "light" + player.comboStep;
+      player.attackTimer = 0.21 / spd;
+    }
+
+    player.hitAppliedThisSwing = false;
+    player.vx = player.facing * (kind === "heavy" ? 210 : 125);
+    AudioEngine.slash(kind === "heavy");
+
+    slashes.push({
+      x: player.x + player.w / 2 + player.facing * (w.reach * 0.55),
+      y: player.y + player.h * 0.48,
+      r: w.reach * (kind === "heavy" ? 1.2 : 0.95),
+      facing: player.facing,
+      life: 0.16,
+      maxLife: 0.16,
+      color: kind === "heavy" ? "#ff7c54" : "#f5ead6"
+    });
+  }
+
+  function applyPlayerHitbox() {
+    if (player.hitAppliedThisSwing) return;
+    player.hitAppliedThisSwing = true;
+
+    const w = WEAPONS[state.equippedWeapon] || WEAPONS.sword;
+    let mult = 1.0;
+    if (player.attackType === "light2") mult = 1.22;
+    else if (player.attackType === "light3") mult = 1.52;
+    else if (player.attackType === "heavy") mult = 1.82;
+    else if (player.attackType === "air") mult = 1.28;
+    else if (player.attackType === "skill") mult = player._skillMult || 2.1;
+    else if (player.attackType === "ult") mult = 3.1;
+
+    const dmg = Math.round(getAttackPower() * mult);
+    const reach = player.attackType === "ult" ? w.reach + 36 : w.reach;
+    const hitX = player.facing === 1 ? player.x + player.w : player.x - reach;
+    const hitY = player.y - 10;
+
+    for (const en of enemies) {
+      if (en.aiState === "dead") continue;
+      if (hitX < en.x + en.w && hitX + reach > en.x && hitY < en.y + en.h && hitY + player.h + 18 > en.y) {
+        const staggeredBonus = en.aiState === "stagger" ? 1.55 : 1.0;
+        const finalDmg = Math.round(dmg * staggeredBonus);
+        en.hp = Math.max(0, en.hp - finalDmg);
+        en.posture = Math.min(en.maxPosture, en.posture + w.postureDmg * mult);
+        en.hitFlash = 0.14;
+        en.vx = player.facing * (player.attackType === "heavy" || player.attackType === "ult" ? 300 : 150);
+
+        state.chi = Math.min(state.maxChi, state.chi + (state.equippedWeapon === "dual" ? 9 : 6));
+        AudioEngine.hit(player.attackType === "heavy" || player.attackType === "skill" || player.attackType === "ult");
+        addScreenShake(player.attackType === "ult" ? 10 : player.attackType === "heavy" ? 8 : 4);
+        hitstopTimer = player.attackType === "ult" ? 0.065 : player.attackType === "heavy" ? 0.045 : 0.02;
+
+        for (let i = 0; i < 10; i++) {
+          spawnParticle(
+            en.x + en.w / 2,
+            en.y + en.h * 0.45,
+            (Math.random() - 0.5) * 260 + player.facing * 120,
+            -Math.random() * 190,
+            0.35 + Math.random() * 0.2,
+            3 + Math.random() * 3,
+            i % 2 === 0 ? "#ffd985" : "#e04338"
+          );
+        }
+
+        if (en.posture >= en.maxPosture && en.aiState !== "stagger") {
+          en.aiState = "stagger";
+          en.stateTimer = 2.2;
+          en.posture = 0;
+          showToast(en.name + " Posture Broken!");
+        }
+
+        if (en.hp <= 0) {
+          en.aiState = "dead";
+          const rewardXp = en.isBoss ? 220 : 45;
+          const rewardGold = en.isBoss ? 300 : 35;
+          gainXpAndGold(rewardXp, rewardGold);
+          if (en.isBoss && !state.bossDefeated) {
+            state.bossDefeated = true;
+            state.quests[0].status = "Completed";
+            state.quests[0].progress = "1 / 1 Boss Defeated";
+            REGIONS[2].unlocked = true;
+            showSubtitle(
+              "ပြာမှုန်အာဏာသား ကျဆုံးသွားပြီ။ ရွှေမြို့တော်သို့ လမ်းပွင့်သွားပြီ။",
+              "The Ashen Executioner falls. The path toward the Golden Capital opens.",
+              4500
+            );
+            saveToSlot("autosave");
+          }
+        }
+      }
+    }
+  }
+
+  function gainXpAndGold(xpAmt, goldAmt) {
+    state.xp += xpAmt;
+    state.gold += goldAmt;
+    showToast(`+${xpAmt} XP  +${goldAmt} Gold`);
+    while (state.xp >= state.nextXp) {
+      state.xp -= state.nextXp;
+      state.level += 1;
+      state.nextXp = Math.round(state.nextXp * 1.35);
+      state.skillPoints += 1;
+      state.maxHp += 15;
+      state.hp = state.maxHp;
+      state.maxChi += 10;
+      state.chi = state.maxChi;
+      showToast(`LEVEL UP! Level ${state.level} (+1 Skill Point)`);
+    }
+  }
+
+  function triggerParry() {
+    if (player.parryTimer > 0) return;
+    player.parryTimer = 0.26;
+    player.invulnTimer = Math.max(player.invulnTimer, 0.22);
+    AudioEngine.slash(false);
+    for (let i = 0; i < 8; i++) {
+      spawnParticle(
+        player.x + player.w / 2 + player.facing * 24,
+        player.y + player.h * 0.45,
+        player.facing * (60 + Math.random() * 100),
+        (Math.random() - 0.5) * 120,
+        0.22,
+        3,
+        "#ffd985"
+      );
+    }
+  }
+
+  function triggerDodge() {
+    if (player.rollTimer > 0 || player.dashCooldown > 0) return;
+    if (state.stamina < 18) {
+      showToast("Low Stamina");
+      return;
+    }
+    state.stamina -= 18;
+    player.rollTimer = 0.26;
+    player.dashCooldown = 0.45;
+    player.invulnTimer = 0.32;
+    player.attachedRope = null;
+    player.grappleTarget = null;
+    const dir = Math.abs(getMoveInputX()) > 0.1 ? Math.sign(getMoveInputX()) : player.facing;
+    player.facing = dir;
+    player.vx = dir * 470;
+    AudioEngine.dodge();
+  }
+
+  function damagePlayer(rawDmg, fromX) {
+    if (player.invulnTimer > 0 || player.rollTimer > 0) return;
+    if (player.parryTimer > 0) {
+      player.parryTimer = 0;
+      player.invulnTimer = 0.45;
+      state.chi = Math.min(state.maxChi, state.chi + 18);
+      AudioEngine.parry();
+      addScreenShake(9);
+      hitstopTimer = 0.08;
+      showToast("PERFECT PARRY!");
+      for (const en of enemies) {
+        if (en.aiState !== "dead" && Math.abs(en.x - player.x) < 160) {
+          en.posture = Math.min(en.maxPosture, en.posture + 38);
+          en.vx = player.facing * 240;
+          if (en.posture >= en.maxPosture) {
+            en.aiState = "stagger";
+            en.stateTimer = 2.4;
+            en.posture = 0;
+          }
+        }
+      }
+      return;
+    }
+
+    let dmg = Math.max(2, rawDmg - Math.floor(state.attrs.vitality * 0.35));
+    if (player.ironBodyTimer > 0) dmg = Math.ceil(dmg * 0.5);
+
+    state.hp = Math.max(0, state.hp - dmg);
+    player.invulnTimer = 0.7;
+    player.vx = (player.x >= fromX ? 1 : -1) * 220;
+    player.vy = -180;
+    AudioEngine.hit(true);
+    addScreenShake(7);
+
+    if (state.hp <= 0) {
+      state.hp = state.maxHp;
+      state.chi = state.maxChi;
+      player.x = 180;
+      player.y = 780;
+      player.vx = 0;
+      player.vy = 0;
+      player.grappleTarget = null;
+      player.attachedRope = null;
+      showSubtitle(
+        "သီဟ ပြန်လည်စုစည်းနိုင်ခဲ့သည်။ တိုက်ပွဲကို ထပ်မံစမ်းသပ်ပါ။",
+        "Thiha gathers his breath at the village shrine. Rise and strike again.",
+        4000
+      );
+    }
+  }
+
+  function handleInteract() {
+    for (const npc of npcs) {
+      if (Math.hypot(player.x - npc.x, player.y - npc.y) < 95) {
+        openDialogue(npc);
+        return;
+      }
+    }
+    if (!scrollPickup.collected && Math.hypot(player.x + player.w / 2 - scrollPickup.x, player.y + player.h / 2 - scrollPickup.y) < 75) {
+      scrollPickup.collected = true;
+      state.scrollCollected = true;
+      state.quests[1].status = "Completed";
+      state.quests[1].progress = "1 / 1 Scroll Found";
+      gainXpAndGold(60, 50);
+      showSubtitle(
+        "ရှေးဟောင်း သိုင်းကျမ်းလိပ်ကို ရှာတွေ့ခဲ့သည်။",
+        "Found the Ancient Martial Scroll on the high ridge.",
+        3500
+      );
+    }
+  }
+
+  function openDialogue(npc) {
+    const box = document.getElementById("dialogueBox");
+    document.getElementById("dlgSpeaker").textContent = npc.name;
+    document.getElementById("dlgMm").textContent =
+      "သီဟ... မင်းရဲ့ ဓားချက်တွေဟာ ဖခင်ရဲ့ သွေးသားကို သက်သေပြနေတယ်။ တောင်ထိပ်က ပြာမှုန်အာဏာသားကို သတိထားပါ။";
+    document.getElementById("dlgEn").textContent =
+      "\"Thiha... your blade carries your father's spirit. Beware the Ashen Executioner guarding the pass.\"";
+    state.relationshipElder = Math.min(100, state.relationshipElder + 15);
+    state.quests[2].status = "Completed";
+    state.quests[2].progress = "Spoken";
+
+    const choices = document.getElementById("dlgChoices");
+    choices.innerHTML = "";
+
+    const c1 = document.createElement("button");
+    c1.className = "btn-rpg small";
+    c1.textContent = "I swear vengeance on the Black Lotus (ကြာနက်ဂိုဏ်းကို လက်စားချေမည်)";
+    c1.onclick = () => { state.choicePath = "vengeance"; box.classList.remove("open"); showToast("Path Chosen: Vengeance"); };
+
+    const c2 = document.createElement("button");
+    c2.className = "btn-rpg small";
+    c2.textContent = "I seek the truth behind the order (အမှန်တရားကို ရှာဖွေမည်)";
+    c2.onclick = () => { state.choicePath = "mercy"; box.classList.remove("open"); showToast("Path Chosen: Truth"); };
+
+    choices.appendChild(c1);
+    choices.appendChild(c2);
+    box.classList.add("open");
+  }
+
+  /* =========================================================================
+     7. SIMULATION STEP (Physics, Ropes, Grapple, Collapsing Bridges, AI)
+     ========================================================================= */
+  function updateSimulation(dt) {
+    gameTime += dt;
+
+    // Collapsing platform timers
+    for (const p of platforms) {
+      if (p.type === "collapsing") {
+        if (p.state === "shaking") {
+          p.timer -= dt;
+          if (p.timer <= 0) {
+            p.state = "broken";
+            p.timer = 3.2;
+          }
+        } else if (p.state === "broken") {
+          p.timer -= dt;
+          if (p.timer <= 0) {
+            p.state = "stable";
+          }
+        }
+      }
+    }
+
+    // Rope pendulum physics
+    for (const r of ropes) {
+      const angAcc = -9.8 / (r.length * 0.25) * Math.sin(r.angle);
+      r.angVel += angAcc * dt;
+      r.angVel *= Math.pow(0.6, dt);
+      r.angle += r.angVel * dt;
+    }
+
+    if (currentMode !== "playing") {
+      updateParticles(dt);
+      justPressed.clear();
+      return;
+    }
+
+    if (document.getElementById("rpgModal").classList.contains("open") ||
+        document.getElementById("dialogueBox").classList.contains("open")) {
+      justPressed.clear();
+      return;
+    }
+
+    if (hitstopTimer > 0) {
+      hitstopTimer -= dt;
+      justPressed.clear();
+      return;
+    }
+
+    const timeScale = slowMoTimer > 0 ? 0.45 : 1.0;
+    if (slowMoTimer > 0) slowMoTimer -= dt;
+    const stepDt = dt * timeScale;
+
+    player.animTime += stepDt;
+    if (player.dashCooldown > 0) player.dashCooldown -= stepDt;
+    if (player.rollTimer > 0) player.rollTimer -= stepDt;
+    if (player.parryTimer > 0) player.parryTimer -= stepDt;
+    if (player.invulnTimer > 0) player.invulnTimer -= stepDt;
+    if (player.ironBodyTimer > 0) player.ironBodyTimer -= stepDt;
+    if (player.comboResetTimer > 0) {
+      player.comboResetTimer -= stepDt;
+      if (player.comboResetTimer <= 0) player.comboStep = 0;
+    }
+
+    if (player.attackTimer > 0) {
+      player.attackTimer -= stepDt;
+      if (player.attackTimer <= 0.14) applyPlayerHitbox();
+    }
+
+    state.stamina = Math.min(state.maxStamina, state.stamina + 22 * stepDt);
+    state.chi = Math.min(state.maxChi, state.chi + 5 * stepDt);
+
+    const moveX = getMoveInputX();
+    const moveY = getMoveInputY();
+    const sprinting = keysDown.has("ShiftLeft") && Math.abs(moveX) > 0.25 && player.rollTimer <= 0;
+
+    if (justPressed.has(state.keybinds.switchWeapon)) switchWeapon();
+    if (justPressed.has(state.keybinds.interact)) triggerRopeOrInteract();
+    if (justPressed.has(state.keybinds.grapple)) triggerGrapple();
+    if (justPressed.has(state.keybinds.parry)) triggerParry();
+    if (justPressed.has(state.keybinds.dodge)) triggerDodge();
+    if (justPressed.has(state.keybinds.light)) startAttack("light");
+    if (justPressed.has(state.keybinds.heavy)) startAttack("heavy");
+    if (justPressed.has(state.keybinds.skill)) startAttack("skill");
+    if (justPressed.has(state.keybinds.martial) || justPressed.has(state.keybinds.ult)) startAttack("ult");
+
+    // Grapple pull movement
+    if (player.grappleTarget) {
+      const gp = player.grappleTarget;
+      const cx = player.x + player.w / 2;
+      const cy = player.y + player.h / 2;
+      const dx = gp.x - cx;
+      const dy = gp.y - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 28 || justPressed.has(state.keybinds.jump)) {
+        player.grappleTarget = null;
+        player.vy = -420;
+        player.vx = player.facing * 260;
+        player.canDoubleJump = true;
+      } else {
+        player.vx = (dx / dist) * 560;
+        player.vy = (dy / dist) * 560;
+        player.x += player.vx * stepDt;
+        player.y += player.vy * stepDt;
+      }
+    } else if (player.attachedRope) {
+      const r = player.attachedRope;
+      r.angVel += moveX * 3.8 * stepDt;
+      r.angle += r.angVel * stepDt;
+      player.x = r.anchorX + Math.sin(r.angle) * r.length - player.w / 2;
+      player.y = r.anchorY + Math.cos(r.angle) * r.length - player.h * 0.4;
+      if (justPressed.has(state.keybinds.jump)) {
+        player.attachedRope = null;
+        player.vx = Math.sin(r.angle) * 340 + moveX * 140;
+        player.vy = -510;
+        player.canDoubleJump = true;
+        AudioEngine.jump();
+      }
+    } else {
+      if (player.rollTimer <= 0 && player.attackTimer <= 0.05) {
+        if (Math.abs(moveX) > 0.08) {
+          player.facing = moveX > 0 ? 1 : -1;
+          const baseSpd = (sprinting ? 310 : 215) + state.attrs.agility * 2.5;
+          player.vx = moveX * baseSpd;
+          if (player.onGround && Math.random() < 0.08) AudioEngine.step();
+        } else {
+          player.vx *= Math.pow(0.001, stepDt);
+          if (Math.abs(player.vx) < 4) player.vx = 0;
+        }
+      }
+
+      if (justPressed.has(state.keybinds.jump)) {
+        if (player.onGround) {
+          player.vy = -540;
+          player.onGround = false;
+          player.canDoubleJump = true;
+          AudioEngine.jump();
+        } else if (player.onWall !== 0) {
+          player.vx = -player.onWall * 360;
+          player.vy = -520;
+          player.facing = -player.onWall;
+          player.onWall = 0;
+          player.canDoubleJump = true;
+          AudioEngine.jump();
+        } else if (player.canDoubleJump && state.unlockedSkills.includes("double_jump")) {
+          player.vy = -490;
+          player.canDoubleJump = false;
+          AudioEngine.jump();
+          for (let i = 0; i < 8; i++) {
+            spawnParticle(player.x + player.w / 2, player.y + player.h, (Math.random() - 0.5) * 140, 40 + Math.random() * 60, 0.3, 3, "#f5ead6");
+          }
+        }
+      }
+
+      const gravity = 1320;
+      player.vy = Math.min(880, player.vy + gravity * stepDt);
+
+      player.x += player.vx * stepDt;
+      player.onWall = 0;
+
+      for (const p of platforms) {
+        if (p.type === "oneway" || (p.type === "collapsing" && p.state === "broken")) continue;
+        if (player.x < p.x + p.w && player.x + player.w > p.x && player.y < p.y + p.h && player.y + player.h > p.y) {
+          if (player.vx > 0) {
+            player.x = p.x - player.w;
+            player.vx = 0;
+            if (!player.onGround) player.onWall = 1;
+          } else if (player.vx < 0) {
+            player.x = p.x + p.w;
+            player.vx = 0;
+            if (!player.onGround) player.onWall = -1;
+          }
+        }
+      }
+
+      if (player.onWall !== 0 && player.vy > 0) {
+        const maxSlide = (moveY < -0.25 && state.stamina > 2) ? -150 : 115;
+        if (moveY < -0.25 && state.stamina > 2) state.stamina = Math.max(0, state.stamina - 14 * stepDt);
+        player.vy = Math.min(player.vy, maxSlide);
+      }
+
+      const prevBottom = player.y + player.h;
+      const prevTop = player.y;
+      player.y += player.vy * stepDt;
+      player.onGround = false;
+      const dropThrough = moveY > 0.55;
+
+      for (const p of platforms) {
+        if (p.type === "collapsing" && p.state === "broken") continue;
+        const overlapX = player.x + 4 < p.x + p.w && player.x + player.w - 4 > p.x;
+        if (!overlapX) continue;
+
+        if (p.type === "oneway") {
+          if (!dropThrough && player.vy >= 0 && prevBottom <= p.y + 10 && player.y + player.h >= p.y) {
+            player.y = p.y - player.h;
+            player.vy = 0;
+            player.onGround = true;
+            player.canDoubleJump = true;
+          }
+        } else {
+          if (player.vy >= 0 && prevBottom <= p.y + 14 && player.y + player.h >= p.y) {
+            player.y = p.y - player.h;
+            player.vy = 0;
+            player.onGround = true;
+            player.canDoubleJump = true;
+            if (p.type === "collapsing" && p.state === "stable") {
+              p.state = "shaking";
+              p.timer = 0.65;
+            }
+          } else if (player.vy < 0 && prevTop >= p.y + p.h - 10 && player.y <= p.y + p.h) {
+            player.y = p.y + p.h;
+            player.vy = 0;
+          }
+        }
+      }
+    }
+
+    if (player.y > WORLD_H - 40) {
+      damagePlayer(20, player.x - 40);
+      player.y = 740;
+      player.vy = -260;
+    }
+
+    player.scarfPoints[0].x = player.x + player.w / 2 - player.facing * 4;
+    player.scarfPoints[0].y = player.y + 16;
+    for (let i = 1; i < player.scarfPoints.length; i++) {
+      const prev = player.scarfPoints[i - 1];
+      const cur = player.scarfPoints[i];
+      const windX = -player.facing * 28 + Math.sin(gameTime * 6 + i) * 14;
+      const windY = Math.cos(gameTime * 5 + i) * 8 + 6;
+      cur.x += (prev.x - player.facing * 6 + windX * stepDt - cur.x) * Math.min(1, stepDt * 18);
+      cur.y += (prev.y + windY * stepDt - cur.y) * Math.min(1, stepDt * 18);
+    }
+
+    let activeBoss = null;
+    for (const en of enemies) {
+      if (en.hitFlash > 0) en.hitFlash -= stepDt;
+      if (en.aiState === "dead") continue;
+
+      en.vy = Math.min(820, en.vy + 1320 * stepDt);
+      en.x += en.vx * stepDt;
+      en.y += en.vy * stepDt;
+      en.vx *= Math.pow(0.01, stepDt);
+
+      for (const p of platforms) {
+        if (p.type === "solid") {
+          if (en.x < p.x + p.w && en.x + en.w > p.x && en.y + en.h >= p.y && en.y < p.y + 30) {
+            en.y = p.y - en.h;
+            en.vy = 0;
+          }
+        }
+      }
+
+      const distToPlayer = Math.hypot((player.x + player.w / 2) - (en.x + en.w / 2), (player.y + player.h / 2) - (en.y + en.h / 2));
+
+      if (en.isBoss && distToPlayer < 680) {
+        if (!en.engaged) {
+          en.engaged = true;
+          AudioEngine.gong();
+          showSubtitle(
+            "ငါသည် ပြာမှုန်အာဏာသား—မင်း၏ ဓားသွားကို စမ်းသပ်မည်။",
+            "I am the Ashen Executioner—let us test the edge of your blade.",
+            4000
+          );
+        }
+        activeBoss = en;
+        if (en.hp < en.maxHp * 0.5 && en.phase === 1) {
+          en.phase = 2;
+          en.speed *= 1.25;
+          showToast("Boss Phase II: Unrelenting Ash!");
+        }
+      }
+
+      if (en.aiState === "stagger") {
+        en.stateTimer -= stepDt;
+        if (en.stateTimer <= 0) en.aiState = "chase";
+        continue;
+      }
+      if (en.aiState === "telegraph") {
+        en.stateTimer -= stepDt;
+        if (en.stateTimer <= 0) {
+          en.aiState = "attack";
+          en.stateTimer = 0.24;
+          en.vx = en.facing * (en.isBoss ? 360 : 230);
+          slashes.push({
+            x: en.x + en.w / 2 + en.facing * 36,
+            y: en.y + en.h * 0.5,
+            r: en.isBoss ? 68 : 48,
+            facing: en.facing,
+            life: 0.16,
+            maxLife: 0.16,
+            color: "#ff5533"
+          });
+          if (distToPlayer < (en.isBoss ? 115 : 82)) {
+            damagePlayer(en.atk * (en.phase === 2 ? 1.2 : 1.0), en.x);
+          }
+        }
+        continue;
+      }
+      if (en.aiState === "attack") {
+        en.stateTimer -= stepDt;
+        if (en.stateTimer <= 0) { en.aiState = "chase"; en.stateTimer = 0.55; }
+        continue;
+      }
+
+      if (distToPlayer < (en.isBoss ? 560 : 340)) {
+        en.aiState = "chase";
+        en.facing = player.x + player.w / 2 >= en.x + en.w / 2 ? 1 : -1;
+        if (distToPlayer < (en.isBoss ? 92 : 68)) {
+          en.aiState = "telegraph";
+          en.stateTimer = en.isBoss ? 0.42 : 0.52;
+        } else {
+          en.x += en.facing * en.speed * stepDt;
+        }
+      } else {
+        en.aiState = "patrol";
+        en.x += en.facing * (en.speed * 0.45) * stepDt;
+        if (en.x < en.patrolMin) { en.x = en.patrolMin; en.facing = 1; }
+        if (en.x > en.patrolMax) { en.x = en.patrolMax; en.facing = -1; }
+      }
+    }
+
+    const bossHud = document.getElementById("bossHud");
+    if (activeBoss && activeBoss.aiState !== "dead") {
+      bossHud.classList.add("active");
+      document.getElementById("bossNameLabel").textContent = activeBoss.name;
+      document.getElementById("bossPhaseLabel").textContent = "Phase " + (activeBoss.phase === 2 ? "II" : "I");
+      document.getElementById("bossHpFill").style.width = (activeBoss.hp / activeBoss.maxHp * 100) + "%";
+      document.getElementById("bossHpText").textContent = `${activeBoss.hp} / ${activeBoss.maxHp}`;
+      const posPct = Math.round(activeBoss.posture / activeBoss.maxPosture * 100);
+      document.getElementById("bossPosFill").style.width = posPct + "%";
+      document.getElementById("bossPosText").textContent = posPct + "%";
+    } else {
+      bossHud.classList.remove("active");
+    }
+
+    const viewW = canvas.clientWidth;
+    const viewH = canvas.clientHeight;
+    const targetX = Math.max(0, Math.min(WORLD_W - viewW, player.x + player.w / 2 - viewW * 0.42 + player.facing * 60));
+    const targetY = Math.max(0, Math.min(WORLD_H - viewH, player.y + player.h / 2 - viewH * 0.62));
+    camera.x += (targetX - camera.x) * Math.min(1, stepDt * 7.5);
+    camera.y += (targetY - camera.y) * Math.min(1, stepDt * 7.5);
+    if (camera.shake > 0) camera.shake = Math.max(0, camera.shake - 28 * dt);
+
+    if (Math.random() < (state.settings.particles === "LOW" ? 0.15 : 0.45)) {
+      spawnParticle(
+        camera.x + Math.random() * viewW,
+        camera.y - 10,
+        -25 + Math.random() * 50,
+        25 + Math.random() * 45,
+        3.5,
+        2.5,
+        Math.random() < 0.6 ? "#e5b55a" : "#77c28d"
+      );
+    }
+
+    updateParticles(stepDt);
+    updateHudDom();
+    justPressed.clear();
+  }
+
+  function updateParticles(dt) {
+    for (const p of particles) {
+      if (!p.active) continue;
+      p.life -= dt;
+      if (p.life <= 0) { p.active = false; continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    for (let i = slashes.length - 1; i >= 0; i--) {
+      slashes[i].life -= dt;
+      if (slashes[i].life <= 0) slashes.splice(i, 1);
+    }
+  }
+
+  function updateHudDom() {
+    document.getElementById("hudHpFill").style.width = Math.max(0, (state.hp / state.maxHp) * 100) + "%";
+    document.getElementById("hudHpText").textContent = `HP ${state.hp} / ${state.maxHp}`;
+    document.getElementById("hudLvText").textContent = `LV.${state.level}`;
+    document.getElementById("hudStmFill").style.width = Math.max(0, (state.stamina / state.maxStamina) * 100) + "%";
+    document.getElementById("hudStmText").textContent = Math.round(state.stamina);
+    document.getElementById("hudChiFill").style.width = Math.max(0, (state.chi / state.maxChi) * 100) + "%";
+    document.getElementById("hudChiText").textContent = Math.round(state.chi);
+    const w = WEAPONS[state.equippedWeapon] || WEAPONS.sword;
+    const sk = SKILL_CATALOG.find((s) => s.id === state.activeSkillId) || SKILL_CATALOG[0];
+    document.getElementById("hudWeaponLabel").textContent = `Weapon: ${w.cls}`;
+    document.getElementById("hudActiveSkillLabel").textContent = `Skill: ${sk.name}`;
+    document.getElementById("hudZoneLabel").textContent = player.x > 2350 ? "Ashen Ridge" : player.x > 1250 ? "Bamboo Pass" : "Forgotten Village";
+  }
+
+  /* =========================================================================
+     8. CANVAS 2D RENDERER
+     ========================================================================= */
+  function drawBackground(w, h, camX, camY, isMenu) {
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#190c14");
+    sky.addColorStop(0.45, "#5a2224");
+    sky.addColorStop(0.78, "#c85b2c");
+    sky.addColorStop(1, "#f2a649");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    const sunX = isMenu ? w * 0.68 : w * 0.72 - (camX * 0.03) % (w * 0.5);
+    const sunY = h * 0.42;
+    const sunGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 150);
+    sunGlow.addColorStop(0, "rgba(255, 232, 160, 0.95)");
+    sunGlow.addColorStop(0.35, "rgba(255, 150, 65, 0.45)");
+    sunGlow.addColorStop(1, "rgba(255, 120, 40, 0)");
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 150, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawMountainLayer(w, h, camX * 0.12, h * 0.58, 95, "#2b161c", true);
+    drawMountainLayer(w, h, camX * 0.26, h * 0.68, 70, "#1b0f14", false);
+
+    const mistGrad = ctx.createLinearGradient(0, h * 0.55, 0, h * 0.85);
+    mistGrad.addColorStop(0, "rgba(244, 182, 118, 0)");
+    mistGrad.addColorStop(0.5, "rgba(244, 182, 118, 0.14)");
+    mistGrad.addColorStop(1, "rgba(20, 12, 12, 0)");
+    ctx.fillStyle = mistGrad;
+    ctx.fillRect(0, h * 0.55, w, h * 0.3);
+  }
+
+  function drawMountainLayer(w, h, offsetX, baseY, amp, color, withPagoda) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    const step = 140;
+    const startIdx = Math.floor(offsetX / step) - 1;
+    const endIdx = startIdx + Math.ceil(w / step) + 3;
+    for (let i = startIdx; i <= endIdx; i++) {
+      const sx = i * step - offsetX;
+      const peak = Math.sin(i * 1.37) * amp * 0.6 + Math.cos(i * 0.73) * amp * 0.4;
+      ctx.lineTo(sx, baseY - Math.abs(peak));
+    }
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fill();
+
+    if (withPagoda) {
+      const px = w * 0.64 - ((offsetX * 0.5) % (w * 0.8));
+      const py = baseY - amp * 0.72;
+      drawPagodaSilhouette(px, py, 0.85, color);
+    }
+  }
+
+  function drawPagodaSilhouette(x, y, scale, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = color;
+    ctx.fillRect(-45, 0, 90, 12);
+    for (let t = 0; t < 4; t++) {
+      const tw = 64 - t * 13;
+      const ty = -10 - t * 14;
+      ctx.beginPath();
+      ctx.moveTo(-tw * 0.6, ty + 12);
+      ctx.quadraticCurveTo(0, ty - 4, tw * 0.6, ty + 12);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.moveTo(-4, -64);
+    ctx.lineTo(4, -64);
+    ctx.lineTo(0, -88);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCharacter(x, y, w, h, facing, animT, opts = {}) {
+    ctx.save();
+    const cx = x + w / 2;
+    const bottom = y + h;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+    ctx.beginPath();
+    ctx.ellipse(cx, bottom + 2, w * 0.55, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (opts.scarf) {
+      ctx.strokeStyle = opts.ironBody ? "#79d2ff" : "#c83e37";
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      opts.scarf.forEach((pt, idx) => {
+        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.stroke();
+    }
+
+    ctx.translate(cx, bottom);
+    ctx.scale(facing, 1);
+
+    const walkSwing = opts.moving ? Math.sin(animT * 13) * 10 : 0;
+    const breathe = Math.sin(animT * 3.2) * 1.8;
+
+    if (opts.hasBackSword) {
+      ctx.save();
+      ctx.translate(-4, -h * 0.62 + breathe);
+      ctx.rotate(-0.62);
+      ctx.fillStyle = "#4d3524";
+      ctx.fillRect(-18, -2.5, 42, 5);
+      ctx.fillStyle = "#e5b55a";
+      ctx.fillRect(10, -5, 4, 10);
+      ctx.restore();
+    }
+
+    ctx.strokeStyle = opts.flash ? "#ffffff" : (opts.clothColor || "#222733");
+    ctx.lineWidth = 7;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-4, -22);
+    ctx.lineTo(-6 - walkSwing, -3);
+    ctx.moveTo(4, -22);
+    ctx.lineTo(6 + walkSwing, -3);
+    ctx.stroke();
+
+    ctx.fillStyle = opts.flash ? "#ffffff" : (opts.robeColor || "#f0e6d2");
+    ctx.beginPath();
+    ctx.moveTo(-11, -42 + breathe);
+    ctx.lineTo(11, -42 + breathe);
+    ctx.lineTo(14, -18);
+    ctx.lineTo(-14, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = opts.flash ? "#ffffff" : (opts.sashColor || "#c83e37");
+    ctx.fillRect(-11, -24 + breathe * 0.5, 22, 6);
+
+    const headY = -49 + breathe;
+    ctx.fillStyle = opts.flash ? "#ffffff" : "#e8be98";
+    ctx.beginPath();
+    ctx.arc(0, headY, 8.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = opts.flash ? "#ffffff" : (opts.hairColor || "#161213");
+    ctx.beginPath();
+    ctx.arc(0, headY - 1.5, 9.2, Math.PI * 0.85, Math.PI * 2.15);
+    ctx.lineTo(-14, headY + 14 + Math.sin(animT * 5) * 2);
+    ctx.lineTo(-6, headY + 8);
+    ctx.closePath();
+    ctx.fill();
+
+    if (opts.attacking) {
+      ctx.strokeStyle = "#ffd985";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(4, -34 + breathe);
+      ctx.lineTo(28, -42 + breathe);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function renderFrame() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (!w || !h) return;
+
+    if (currentMode === "menu") {
+      drawBackground(w, h, 0, 0, true);
+      ctx.fillStyle = "#140b0a";
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, h * 0.74);
+      ctx.quadraticCurveTo(w * 0.34, h * 0.64, w * 0.56, h * 0.82);
+      ctx.lineTo(w * 0.56, h);
+      ctx.closePath();
+      ctx.fill();
+
+      const heroX = w * 0.36;
+      const heroY = h * 0.69 - 58;
+      const scarf = Array.from({ length: 7 }, (_, i) => ({
+        x: heroX + 12 - i * 8,
+        y: heroY + 18 + Math.sin(gameTime * 3.5 + i * 0.7) * (3 + i)
+      }));
+      drawCharacter(heroX, heroY, 34, 58, 1, gameTime, { moving: false, hasBackSword: true, scarf });
+      return;
+    }
+
+    const sx = camera.shake > 0 ? (Math.random() - 0.5) * camera.shake * 2 : 0;
+    const sy = camera.shake > 0 ? (Math.random() - 0.5) * camera.shake * 2 : 0;
+    const camX = camera.x + sx;
+    const camY = camera.y + sy;
+
+    drawBackground(w, h, camX, camY, false);
+
+    ctx.save();
+    ctx.translate(-camX, -camY);
+
+    ctx.strokeStyle = "rgba(38, 72, 42, 0.55)";
+    ctx.lineWidth = 8;
+    for (let bx = 120; bx < WORLD_W; bx += 190) {
+      if (bx < camX - 60 || bx > camX + w + 60) continue;
+      const sway = Math.sin(gameTime * 1.4 + bx * 0.01) * 10;
+      ctx.beginPath();
+      ctx.moveTo(bx, WORLD_H);
+      ctx.quadraticCurveTo(bx + sway * 0.5, 520, bx + sway, 220);
+      ctx.stroke();
+    }
+
+    // Hanging ropes
+    for (const r of ropes) {
+      const tipX = r.anchorX + Math.sin(r.angle) * r.length;
+      const tipY = r.anchorY + Math.cos(r.angle) * r.length;
+      ctx.strokeStyle = "#c99b56";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(r.anchorX, r.anchorY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+      ctx.fillStyle = "#ffd985";
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Grapple anchors
+    for (const gp of grapplePoints) {
+      ctx.strokeStyle = "#ffd985";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(gp.x, gp.y, gp.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#e5b55a";
+      ctx.beginPath();
+      ctx.arc(gp.x, gp.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Active grapple line
+    if (player.grappleTarget) {
+      ctx.strokeStyle = "#ffd985";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.w / 2, player.y + player.h * 0.4);
+      ctx.lineTo(player.grappleTarget.x, player.grappleTarget.y);
+      ctx.stroke();
+    }
+
+    // Platforms
+    for (const p of platforms) {
+      if (p.x + p.w < camX - 40 || p.x > camX + w + 40) continue;
+      if (p.type === "collapsing") {
+        if (p.state === "broken") {
+          ctx.strokeStyle = "rgba(229, 181, 90, 0.25)";
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(p.x, p.y, p.w, p.h);
+          ctx.setLineDash([]);
+          continue;
+        }
+        const jitterX = p.state === "shaking" ? (Math.random() - 0.5) * 6 : 0;
+        ctx.fillStyle = p.state === "shaking" ? "#9e3c2b" : "#6e4b34";
+        ctx.fillRect(p.x + jitterX, p.y, p.w, p.h);
+      } else if (p.type === "climb") {
+        ctx.fillStyle = "#3a2921";
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = "#e5b55a";
+        ctx.lineWidth = 2;
+        for (let ry = p.y + 16; ry < p.y + p.h - 10; ry += 22) {
+          ctx.beginPath();
+          ctx.moveTo(p.x + 5, ry);
+          ctx.lineTo(p.x + p.w - 5, ry);
+          ctx.stroke();
+        }
+      } else if (p.type === "oneway") {
+        ctx.fillStyle = "#3a4d36";
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = "#e5b55a";
+        ctx.fillRect(p.x, p.y, p.w, 3);
+      } else {
+        ctx.fillStyle = "#1d1411";
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = "#3a5435";
+        ctx.fillRect(p.x, p.y, p.w, 8);
+      }
+    }
+
+    if (!scrollPickup.collected) {
+      const bob = Math.sin(gameTime * 4) * 4;
+      ctx.fillStyle = "#ffd985";
+      ctx.beginPath();
+      ctx.arc(scrollPickup.x, scrollPickup.y + bob, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Scroll [E]", scrollPickup.x, scrollPickup.y + bob - 14);
+    }
+
+    for (const npc of npcs) {
+      drawCharacter(npc.x, npc.y, npc.w, npc.h, 1, gameTime * 0.7, {
+        robeColor: "#7a6d5d", sashColor: "#3ca387", hairColor: "#cfc7ba"
+      });
+      ctx.fillStyle = "#ffd985";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Elder Kyaw [E]", npc.x + npc.w / 2, npc.y - 12);
+    }
+
+    for (const en of enemies) {
+      if (en.aiState === "dead") continue;
+      drawCharacter(en.x, en.y, en.w, en.h, en.facing, gameTime, {
+        moving: Math.abs(en.vx) > 20 || en.aiState === "chase" || en.aiState === "patrol",
+        robeColor: en.isBoss ? "#2b1214" : "#3a2522",
+        sashColor: en.isBoss ? "#ff4d2e" : "#b83b2b",
+        hairColor: "#141010",
+        flash: en.hitFlash > 0,
+        attacking: en.aiState === "attack"
+      });
+      if (en.aiState === "telegraph") {
+        ctx.fillStyle = "#ff5238";
+        ctx.beginPath();
+        ctx.arc(en.x + en.w / 2 + en.facing * 14, en.y - 10, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (!en.isBoss && en.hp < en.maxHp) {
+        const bw = 38;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(en.x + en.w / 2 - bw / 2, en.y - 14, bw, 5);
+        ctx.fillStyle = "#e04338";
+        ctx.fillRect(en.x + en.w / 2 - bw / 2, en.y - 14, bw * (en.hp / en.maxHp), 5);
+      }
+    }
+
+    drawCharacter(player.x, player.y, player.w, player.h, player.facing, player.animTime, {
+      moving: Math.abs(player.vx) > 15 && player.onGround,
+      hasBackSword: true,
+      scarf: player.scarfPoints,
+      ironBody: player.ironBodyTimer > 0,
+      attacking: player.attackTimer > 0
+    });
+
+    for (const s of slashes) {
+      const alpha = Math.max(0, s.life / s.maxLife);
+      ctx.save();
+      ctx.strokeStyle = s.color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      const startA = s.facing === 1 ? -0.9 : Math.PI - 0.9;
+      const endA = s.facing === 1 ? 0.9 : Math.PI + 0.9;
+      ctx.arc(s.x - s.facing * 16, s.y, s.r * 0.65, startA, endA);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    for (const p of particles) {
+      if (!p.active) continue;
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+  }
+
+  /* =========================================================================
+     9. RPG NAVIGATION MENUS, SETTINGS, SAVES & CINEMATIC INTRO
+     ========================================================================= */
+  const rpgModal = document.getElementById("rpgModal");
+  const modalBody = document.getElementById("modalBody");
+  const modalTitle = document.getElementById("modalTitle");
+  let activeTab = "character";
+
+  function openModal(tab) {
+    AudioEngine.uiClick();
+    activeTab = tab || "character";
+    document.querySelectorAll("#modalTabs .tab-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.tab === activeTab);
+    });
+    renderModalTab(activeTab);
+    rpgModal.classList.add("open");
+  }
+
+  function closeModal() {
+    AudioEngine.uiClick();
+    rpgModal.classList.remove("open");
+    waitingRemapAction = null;
+  }
+
+  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+  document.querySelectorAll("#modalTabs .tab-btn").forEach((b) => {
+    b.addEventListener("click", () => openModal(b.dataset.tab));
+  });
+  document.querySelectorAll(".hud-chip[data-open-tab]").forEach((b) => {
+    b.addEventListener("click", () => openModal(b.dataset.openTab));
+  });
+
+  function renderModalTab(tab) {
+    modalTitle.textContent = "ရာဇဝင်မဲ့သူ — " + tab.toUpperCase();
+    modalBody.className = "panel-content";
+
+    if (tab === "character") {
+      const w = WEAPONS[state.equippedWeapon] || WEAPONS.sword;
+      modalBody.innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <h4>Thiha (သီဟ) — Age 23</h4>
+            <div class="stat-row"><span>Level</span><strong>${state.level}</strong></div>
+            <div class="stat-row"><span>EXP</span><strong>${state.xp} / ${state.nextXp}</strong></div>
+            <div class="stat-row"><span>Vitality (HP)</span><strong>${state.hp} / ${state.maxHp}</strong></div>
+            <div class="stat-row"><span>Stamina</span><strong>${Math.round(state.stamina)} / ${state.maxStamina}</strong></div>
+            <div class="stat-row"><span>Internal Chi</span><strong>${Math.round(state.chi)} / ${state.maxChi}</strong></div>
+            <div class="stat-row"><span>Attack Power</span><strong>${Math.round(getAttackPower())}</strong></div>
+            <div class="stat-row"><span>Equipped Weapon</span><strong>${w.name}</strong></div>
+            <div class="stat-row"><span>Ultimate</span><strong>${w.ultName}</strong></div>
+            <div class="stat-row"><span>Gold</span><strong>${state.gold}</strong></div>
+          </div>
+          <div class="card">
+            <h4>Attributes & Weapon Switch</h4>
+            <div class="stat-row"><span>Might (ခွန်အား)</span><strong>${state.attrs.might}</strong></div>
+            <div class="stat-row"><span>Agility (သွက်လက်မှု)</span><strong>${state.attrs.agility}</strong></div>
+            <div class="stat-row"><span>Vitality (ကြံ့ခိုင်မှု)</span><strong>${state.attrs.vitality}</strong></div>
+            <div class="stat-row"><span>Spirit (စိတ်စွမ်းအား)</span><strong>${state.attrs.spirit}</strong></div>
+            <p style="font-size:12px; color:var(--text-dim);">${w.desc}</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              ${Object.values(WEAPONS).map((wp) => {
+                const owned = state.unlockedWeapons.includes(wp.id);
+                const eq = state.equippedWeapon === wp.id;
+                return `<button class="btn-rpg small" data-eq-weapon="${wp.id}" ${owned ? "" : "disabled"}>
+                  ${wp.cls} ${eq ? "✓" : owned ? "" : "(Locked)"}
+                </button>`;
+              }).join("")}
+            </div>
+          </div>
+        </div>`;
+      modalBody.querySelectorAll("[data-eq-weapon]").forEach((btn) => {
+        btn.onclick = () => {
+          state.equippedWeapon = btn.dataset.eqWeapon;
+          AudioEngine.uiClick();
+          renderModalTab("character");
+        };
+      });
+    } else if (tab === "inventory") {
+      modalBody.innerHTML = `
+        <div class="card">
+          <h4>Items, Weapons & Supplies (Gold: ${state.gold})</h4>
+          ${state.inventory.map((item, idx) => `
+            <div class="stat-row">
+              <div>
+                <strong>${item.name}</strong> <span class="badge">${item.type}</span>
+                ${item.bonus ? `<span style="color:var(--jade); font-size:11.5px;"> (${item.bonus})</span>` : ""}
+              </div>
+              <div>
+                <span style="margin-right:10px;">x${item.qty}</span>
+                ${item.heal ? `<button class="btn-rpg small" data-use-item="${idx}">Use (+${item.heal} HP)</button>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>`;
+      modalBody.querySelectorAll("[data-use-item]").forEach((btn) => {
+        btn.onclick = () => {
+          const idx = Number(btn.dataset.useItem);
+          const it = state.inventory[idx];
+          if (it && it.qty > 0 && it.heal) {
+            it.qty -= 1;
+            state.hp = Math.min(state.maxHp, state.hp + it.heal);
+            AudioEngine.skill();
+            renderModalTab("inventory");
+          }
+        };
+      });
+    } else if (tab === "skills") {
+      modalBody.innerHTML = `
+        <div class="card">
+          <h4>Martial Arts & Techniques — Skill Points Available: <span class="badge">${state.skillPoints} SP</span> • Active Skill: <span class="badge">${state.activeSkillId}</span></h4>
+          <div class="grid-2">
+            ${SKILL_CATALOG.map((sk) => {
+              const unlocked = state.unlockedSkills.includes(sk.id);
+              const lv = state.skillLevels[sk.id] || 0;
+              const isActive = state.activeSkillId === sk.id;
+              return `
+                <div class="card">
+                  <div style="display:flex; justify-content:space-between;">
+                    <strong>${sk.name}</strong>
+                    <span class="badge">${sk.cat}</span>
+                  </div>
+                  <div style="color:var(--gold); font-size:12px;">${sk.mm}</div>
+                  <p style="font-size:12px; color:var(--text-dim); margin:6px 0;">${sk.desc}</p>
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px;">
+                    <span>Chi: ${sk.costChi} • Lv.${lv}</span>
+                    <div style="display:flex; gap:6px;">
+                      ${unlocked ? `<button class="btn-rpg small" data-equip-skill="${sk.id}">${isActive ? "Active ✓" : "Equip"}</button>` : ""}
+                      <button class="btn-rpg small" data-unlock-skill="${sk.id}" ${state.skillPoints > 0 ? "" : "disabled"}>
+                        ${unlocked ? "Upgrade (1 SP)" : "Unlock (1 SP)"}
+                      </button>
+                    </div>
+                  </div>
+                </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      modalBody.querySelectorAll("[data-equip-skill]").forEach((btn) => {
+        btn.onclick = () => {
+          state.activeSkillId = btn.dataset.equipSkill;
+          AudioEngine.uiClick();
+          renderModalTab("skills");
+        };
+      });
+      modalBody.querySelectorAll("[data-unlock-skill]").forEach((btn) => {
+        btn.onclick = () => {
+          if (state.skillPoints <= 0) return;
+          const id = btn.dataset.unlockSkill;
+          if (!state.unlockedSkills.includes(id)) state.unlockedSkills.push(id);
+          state.activeSkillId = id;
+          state.skillLevels[id] = (state.skillLevels[id] || 0) + 1;
+          state.skillPoints -= 1;
+          AudioEngine.skill();
+          renderModalTab("skills");
+        };
+      });
+    } else if (tab === "quests") {
+      modalBody.innerHTML = state.quests.map((q) => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>${q.title}</strong>
+            <span class="badge">${q.type} • ${q.status}</span>
+          </div>
+          <p style="margin:6px 0; font-size:13px;">${q.objective}</p>
+          <div style="font-size:12px; color:var(--gold);">Progress: ${q.progress}</div>
+        </div>`).join("");
+    } else if (tab === "map") {
+      modalBody.innerHTML = `
+        <div class="card">
+          <h4>World of The Nameless Sovereign (7 Regions)</h4>
+          <p style="font-size:12px; color:var(--text-dim);">Defeat the Ashen Executioner to unlock the path to The Golden Capital.</p>
+          <div class="grid-2">
+            ${REGIONS.map((r) => `
+              <div class="card" style="opacity:${r.unlocked ? 1 : 0.55};">
+                <div style="display:flex; justify-content:space-between;">
+                  <strong>${r.name}</strong>
+                  <span class="badge">${r.unlocked ? "Accessible" : "Locked"}</span>
+                </div>
+                <div style="color:var(--gold); font-size:12px;">${r.mm}</div>
+                <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0;">${r.desc}</p>
+              </div>`).join("")}
+          </div>
+        </div>`;
+    } else if (tab === "journal") {
+      modalBody.innerHTML = `
+        <div class="card">
+          <h4>Story Choice Path: <span class="badge">${state.choicePath.toUpperCase()}</span> • Elder Bond: ${state.relationshipElder}</h4>
+        </div>
+        ${JOURNAL_ENTRIES.map((j) => `
+          <div class="card">
+            <h4>${j.title}</h4>
+            <p style="color:var(--gold-bright); font-size:13.5px; margin:4px 0;">${j.mm}</p>
+            <p style="color:var(--text-dim); font-size:12.5px; margin:0;">${j.en}</p>
+          </div>`).join("")}`;
+    } else if (tab === "saves") {
+      const slots = ["autosave", "slot1", "slot2", "slot3"];
+      modalBody.innerHTML = slots.map((slot) => {
+        const raw = localStorage.getItem(STORAGE_PREFIX + slot);
+        let meta = "Empty Slot";
+        if (raw) {
+          try {
+            const d = JSON.parse(raw);
+            meta = `Lv.${d.level} • HP ${d.hp}/${d.maxHp} • ${d.savedAt || "Saved"}`;
+          } catch { meta = "Saved Data"; }
+        }
+        return `
+          <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div>
+              <strong>${slot.toUpperCase()}</strong>
+              <div style="font-size:12px; color:var(--text-dim);">${meta}</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-rpg small" data-save-slot="${slot}">Save</button>
+              <button class="btn-rpg small" data-load-slot="${slot}" ${raw ? "" : "disabled"}>Load</button>
+            </div>
+          </div>`;
+      }).join("");
+      modalBody.querySelectorAll("[data-save-slot]").forEach((b) => {
+        b.onclick = () => { saveToSlot(b.dataset.saveSlot); renderModalTab("saves"); };
+      });
+      modalBody.querySelectorAll("[data-load-slot]").forEach((b) => {
+        b.onclick = () => {
+          if (loadFromSlot(b.dataset.loadSlot)) { closeModal(); enterGameplay(); }
+        };
+      });
+    } else if (tab === "settings") {
+      const s = state.settings;
+      modalBody.innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <h4>Audio & Visuals</h4>
+            <div class="stat-row"><span>Master Volume</span><input type="range" min="0" max="1" step="0.05" value="${s.master}" id="setMaster" /></div>
+            <div class="stat-row"><span>Music Volume</span><input type="range" min="0" max="1" step="0.05" value="${s.music}" id="setMusic" /></div>
+            <div class="stat-row"><span>SFX Volume</span><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" id="setSfx" /></div>
+            <div class="stat-row">
+              <span>Graphics Quality</span>
+              <select id="setGraphics">
+                ${["LOW", "MEDIUM", "HIGH", "ULTRA"].map((g) => `<option value="${g}" ${s.graphics === g ? "selected" : ""}>${g}</option>`).join("")}
+              </select>
+            </div>
+            <div class="stat-row">
+              <span>Touch Controls</span>
+              <select id="setTouch">
+                ${["AUTO", "ON", "OFF"].map((t) => `<option value="${t}" ${s.touchMode === t ? "selected" : ""}>${t}</option>`).join("")}
+              </select>
+            </div>
+            <div class="stat-row">
+              <span>Screen Shake</span>
+              <input type="checkbox" id="setShake" ${s.screenShake ? "checked" : ""} />
+            </div>
+            <div style="margin-top:10px;">
+              <button class="btn-rpg small" id="setFullscreenBtn">Toggle Fullscreen</button>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Keyboard Remapping ${waitingRemapAction ? "<span class='badge'>Press any key...</span>" : ""}</h4>
+            <div class="ctrl-grid">
+              ${Object.entries(state.keybinds).map(([act, code]) => `
+                <div class="remap-item">
+                  <span>${act}</span>
+                  <button class="remap-key" data-remap="${act}">${code}</button>
+                </div>`).join("")}
+            </div>
+          </div>
+        </div>`;
+
+      document.getElementById("setMaster").oninput = (e) => { s.master = Number(e.target.value); applySettings(); };
+      document.getElementById("setMusic").oninput = (e) => { s.music = Number(e.target.value); applySettings(); };
+      document.getElementById("setSfx").oninput = (e) => { s.sfx = Number(e.target.value); applySettings(); };
+      document.getElementById("setGraphics").onchange = (e) => { s.graphics = e.target.value; applySettings(); };
+      document.getElementById("setTouch").onchange = (e) => { s.touchMode = e.target.value; applySettings(); };
+      document.getElementById("setShake").onchange = (e) => { s.screenShake = e.target.checked; };
+      document.getElementById("setFullscreenBtn").onclick = () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+        else document.exitFullscreen?.().catch(() => {});
+      };
+      modalBody.querySelectorAll("[data-remap]").forEach((btn) => {
+        btn.onclick = () => { waitingRemapAction = btn.dataset.remap; renderModalTab("settings"); };
+      });
+    } else if (tab === "credits") {
+      modalBody.innerHTML = `
+        <div class="card">
+          <h4>ရာဇဝင်မဲ့သူ — THE NAMELESS SOVEREIGN</h4>
+          <p>"Every legend begins with a forgotten name."</p>
+          <div class="stat-row"><span>Game Director & Narrative</span><strong>Wuxia Action RPG Studio</strong></div>
+          <div class="stat-row"><span>Combat & Parkour Systems</span><strong>Martial Arts & Metroidvania Team</strong></div>
+          <div class="stat-row"><span>Visual & Audio Direction</span><strong>Canvas 2D & Web Audio Engine</strong></div>
+          <div class="stat-row"><span>Platform Support</span><strong>Android Touch & Desktop Web</strong></div>
+        </div>`;
+    }
+  }
+
+  function applySettings() {
+    const s = state.settings;
+    AudioEngine.setVolumes(s.master, s.music, s.sfx);
+    s.particles = s.graphics === "LOW" ? "LOW" : s.graphics === "MEDIUM" ? "MEDIUM" : "HIGH";
+    const dprBase = window.devicePixelRatio || 1;
+    const cap = s.graphics === "LOW" ? 1 : s.graphics === "MEDIUM" ? 1.25 : s.graphics === "HIGH" ? 1.75 : 2.25;
+    const dpr = Math.min(dprBase, cap);
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (w && h) {
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    const isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    const showTouch = s.touchMode === "ON" || (s.touchMode === "AUTO" && isTouchDevice);
+    document.body.classList.toggle("touch-enabled", showTouch);
+  }
+
+  /* =========================================================================
+     10. FLOW NAVIGATION
+     ========================================================================= */
+  function transitionTo(fn) {
+    const curtain = document.getElementById("fadeCurtain");
+    curtain.classList.add("active");
+    setTimeout(() => { fn(); curtain.classList.remove("active"); }, 320);
+  }
+
+  function startNewGameCinematic() {
+    AudioEngine.unlock();
+    AudioEngine.gong();
+    state = createDefaultState("Autosave");
+    platforms = createWorldPlatforms();
+    ropes = createRopes();
+    grapplePoints = createGrapplePoints();
+    enemies = createEnemies();
+    scrollPickup.collected = false;
+    player.x = 180; player.y = 780; player.vx = 0; player.vy = 0;
+    player.grappleTarget = null; player.attachedRope = null;
+    applySettings();
+
+    currentMode = "intro";
+    document.getElementById("mainMenu").classList.remove("visible");
+    document.body.classList.remove("playing");
+    document.body.classList.add("cinematic");
+
+    showSubtitle(
+      "ကြာနက်ဂိုဏ်း မီးရှို့ဖျက်ဆီးခဲ့သော ကျေးရွာဟောင်း... သီဟ၏ ခရီးစဉ် စတင်ပြီ။",
+      "A village burned by the Black Lotus... Thiha's journey begins.",
+      3400
+    );
+    setTimeout(() => {
+      showSubtitle(
+        "ကြိုးလွှဲခြင်း၊ ချိတ်ကြိုးပစ်ခြင်းနှင့် သိုင်းကွက်များဖြင့် အမှန်တရားကို ရှာဖွေပါ။",
+        "Swing ropes, grapple across gaps, and master weapon arts to uncover the truth.",
+        3200
+      );
+    }, 3400);
+    setTimeout(() => {
+      document.body.classList.remove("cinematic");
+      enterGameplay();
+    }, 6600);
+  }
+
+  function enterGameplay() {
+    currentMode = "playing";
+    document.getElementById("mainMenu").classList.remove("visible");
+    document.body.classList.remove("cinematic");
+    document.body.classList.add("playing");
+    applySettings();
+    updateHudDom();
+  }
+
+  function exitToTitle() {
+    currentMode = "menu";
+    closeModal();
+    document.getElementById("dialogueBox").classList.remove("open");
+    document.body.classList.remove("playing", "cinematic");
+    document.getElementById("mainMenu").classList.add("visible");
+    refreshSaveSummary();
+  }
+
+  document.getElementById("btnNewGame").onclick = startNewGameCinematic;
+  document.getElementById("btnContinue").onclick = () => {
+    AudioEngine.unlock();
+    transitionTo(() => { loadFromSlot("autosave"); enterGameplay(); });
+  };
+  document.getElementById("btnLoadGame").onclick = () => openModal("saves");
+  document.getElementById("btnMenuChar").onclick = () => openModal("character");
+  document.getElementById("btnMenuSettings").onclick = () => openModal("settings");
+  document.getElementById("btnMenuCredits").onclick = () => openModal("credits");
+  document.getElementById("btnExitTitle").onclick = () => transitionTo(exitToTitle);
+
+  document.getElementById("hudSaveBtn").onclick = () => saveToSlot("autosave");
+  document.getElementById("hudSettingsBtn").onclick = () => openModal("settings");
+  document.getElementById("hudTitleBtn").onclick = () => transitionTo(exitToTitle);
+
+  window.addEventListener("resize", applySettings);
+
+  /* =========================================================================
+     11. MAIN LOOP
+     ========================================================================= */
+  let lastTs = performance.now();
+  function loop(now) {
+    const rawDt = (now - lastTs) / 1000;
+    lastTs = now;
+    const dt = Math.min(0.05, Math.max(0.001, rawDt));
+    updateSimulation(dt);
+    renderFrame();
+    requestAnimationFrame(loop);
+  }
+
+  refreshSaveSummary();
+  applySettings();
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
